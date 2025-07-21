@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shulmeister's MyTube</title>
+    <title>Shulmeister's MyTube v2.1</title>
     <link href="https://vjs.zencdn.net/8.5.2/video-js.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -547,6 +547,7 @@
 
         // Initialize Video.js player
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('MyTube v2.1 - Initializing...');
             player = videojs('live-player', {
                 sources: [{
                     src: '/stream/output.m3u8',
@@ -683,6 +684,7 @@
         let availableStreams = [];
 
         function populateStreamSelector() {
+            console.log('Populating stream selector...');
             // Generate list of potential stream dates (last 30 days)
             const selector = document.getElementById('stream-date-selector');
             const streamList = document.getElementById('stream-list');
