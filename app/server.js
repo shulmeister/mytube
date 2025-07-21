@@ -203,6 +203,30 @@ app.post('/api/stream/change-date', express.json(), (req, res) => {
     });
 });
 
+// API endpoint to manually restart FFmpeg
+app.post('/api/stream/restart', (req, res) => {
+    const { spawn } = require('child_process');
+    
+    try {
+        // Execute FFmpeg restart command
+        const restart = spawn('bash', ['/app/ffmpeg-launcher.sh', 'restart'], {
+            stdio: 'inherit',
+            cwd: '/app'
+        });
+        
+        res.json({
+            success: true,
+            message: 'FFmpeg restart initiated',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: 'Failed to restart FFmpeg',
+            message: error.message
+        });
+    }
+});
+
 // Debug endpoint to check HTML content
 app.get('/api/debug/html-check', (req, res) => {
     const indexPath = path.join(__dirname, 'public', 'index.html');
