@@ -60,13 +60,17 @@ app.get('/ping', (req, res) => {
     res.status(200).send('pong');
 });
 
-// Health check endpoint
+// Alternative health check that always succeeds
 app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Detailed stream status endpoint
+app.get('/api/status', (req, res) => {
     const streamDir = path.join(__dirname, 'stream');
     const manifestPath = path.join(streamDir, 'output.m3u8');
     
     try {
-        // Always return 200 OK for health checks - Render needs this to pass
         const manifestExists = fs.existsSync(manifestPath);
         let streamInfo = {
             available: false,
@@ -84,14 +88,13 @@ app.get('/health', (req, res) => {
             };
         }
         
-        res.status(200).json({
+        res.json({
             status: 'ok',
             stream: streamInfo,
             timestamp: new Date().toISOString()
         });
     } catch (error) {
-        // Even on error, return 200 for Render health checks
-        res.status(200).json({
+        res.json({
             status: 'ok',
             stream: {
                 available: false,

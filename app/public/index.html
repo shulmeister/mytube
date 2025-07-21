@@ -480,7 +480,7 @@
 
         async function checkHealth() {
             try {
-                const response = await fetch('/health');
+                const response = await fetch('/api/status');
                 const data = await response.json();
                 
                 const indicator = document.getElementById('stream-indicator');
