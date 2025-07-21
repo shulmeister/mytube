@@ -227,6 +227,35 @@ app.post('/api/stream/restart', (req, res) => {
     }
 });
 
+// API endpoint to test stream URL availability (proxy for CORS)
+app.get('/api/stream/test-url', async (req, res) => {
+    const { url } = req.query;
+    
+    if (!url) {
+        res.status(400).json({ error: 'URL parameter required' });
+        return;
+    }
+    
+    try {
+        const fetch = require('node-fetch');
+        const response = await fetch(url, { method: 'HEAD', timeout: 10000 });
+        
+        res.json({
+            available: response.ok,
+            status: response.status,
+            url: url,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.json({
+            available: false,
+            error: error.message,
+            url: url,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Debug endpoint to check HTML content
 app.get('/api/debug/html-check', (req, res) => {
     const indexPath = path.join(__dirname, 'public', 'index.html');
@@ -246,6 +275,59 @@ app.get('/api/debug/html-check', (req, res) => {
     } catch (error) {
         res.status(500).json({
             error: 'Failed to read HTML file',
+            message: error.message
+        });
+    }
+});
+
+// Debug endpoint to check date calculations
+app.get('/api/debug/dates', (req, res) => {
+    const { spawn } = require('child_process');
+    
+    try {
+        // Get current system date info
+        const utcDate = new Date().toISOString();
+        const localDate = new Date().toString();
+        
+        // Try to get Mountain Time
+        const mountainTime = new Date().toLocaleString("en-US", {timeZone: "America/Denver"});
+        
+        // Test the date calculation from the FFmpeg script
+        let scriptDate = null;
+        try {
+            const dateCheck = spawn('bash', ['-c', 'TZ=America/Denver date +"%y%m%d"'], {
+                cwd: '/app'
+            });
+            
+            dateCheck.stdout.on('data', (data) => {
+                scriptDate = data.toString().trim();
+            });
+            
+            setTimeout(() => {
+                res.json({
+                    utcDate,
+                    localDate,
+                    mountainTime,
+                    scriptDate,
+                    expectedUrl: `https://forbinaquarium.com/Live/00/ph${scriptDate}/ph${scriptDate}_1080p.m3u8`,
+                    timestamp: new Date().toISOString()
+                });
+            }, 1000);
+            
+        } catch (error) {
+            res.json({
+                utcDate,
+                localDate,
+                mountainTime,
+                scriptDate: 'Error getting script date',
+                error: error.message,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+    } catch (error) {
+        res.status(500).json({
+            error: 'Failed to get date info',
             message: error.message
         });
     }
