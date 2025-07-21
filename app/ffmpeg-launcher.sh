@@ -20,10 +20,26 @@ get_date_string() {
     date -u +"%y%m%d"
 }
 
-# Function to construct the stream URL
+# Function to get fallback date (yesterday) in YYMMDD format
+get_fallback_date_string() {
+    date -u -d "yesterday" +"%y%m%d" 2>/dev/null || date -u -v-1d +"%y%m%d" 2>/dev/null || date -u +"%y%m%d"
+}
+
+# Function to construct the stream URL with fallback
 construct_url() {
     local date_str=$(get_date_string)
-    echo "${BASE_URL}/ph${date_str}/ph${date_str}_1080p.m3u8"
+    local url="${BASE_URL}/ph${date_str}/ph${date_str}_1080p.m3u8"
+    
+    # Test if today's stream exists
+    if curl -s --head "$url" | head -n 1 | grep -q "200 OK"; then
+        echo "$url"
+    else
+        # Fallback to yesterday's stream
+        local fallback_date=$(get_fallback_date_string)
+        local fallback_url="${BASE_URL}/ph${fallback_date}/ph${fallback_date}_1080p.m3u8"
+        echo "$(date): Today's stream not available, using fallback: $fallback_url" >> "$LOG_FILE"
+        echo "$fallback_url"
+    fi
 }
 
 # Function to clean up old segments
@@ -67,6 +83,12 @@ start_ffmpeg() {
     local source_url=$(construct_url)
     echo "$(date): Starting FFmpeg with source: $source_url" >> "$LOG_FILE"
     
+    # Test source URL accessibility
+    if ! curl -s --head "$source_url" | head -n 1 | grep -q "200 OK"; then
+        echo "$(date): ERROR - Source URL not accessible: $source_url" >> "$LOG_FILE"
+        return 1
+    fi
+    
     # Clean up any existing segments
     rm -f "$OUTPUT_DIR"/*.ts "$OUTPUT_DIR"/*.m3u8
     
@@ -87,6 +109,17 @@ start_ffmpeg() {
     local ffmpeg_pid=$!
     echo "$ffmpeg_pid" > "$PID_FILE"
     echo "$(date): FFmpeg started with PID: $ffmpeg_pid" >> "$LOG_FILE"
+    
+    # Give FFmpeg a moment to start and check if it's still running
+    sleep 3
+    if ! ps -p "$ffmpeg_pid" > /dev/null 2>&1; then
+        echo "$(date): ERROR - FFmpeg failed to start or crashed immediately" >> "$LOG_FILE"
+        rm -f "$PID_FILE"
+        return 1
+    fi
+    
+    echo "$(date): FFmpeg startup successful" >> "$LOG_FILE"
+    return 0
 }
 
 # Function to restart FFmpeg
