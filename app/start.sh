@@ -12,9 +12,14 @@ echo "🌐 Environment variables:"
 echo "   PORT: $PORT"
 echo "   NODE_ENV: $NODE_ENV"
 
-# TEMPORARILY DISABLE FFMPEG TO DEBUG
-echo "⚠️  Skipping FFmpeg for debugging..."
-# bash /app/ffmpeg-launcher.sh monitor &
+# Start FFmpeg monitor in background
+echo "🎥 Starting FFmpeg monitor..."
+bash /app/ffmpeg-launcher.sh monitor &
 
-echo "🎯 Starting web server with simplified version..."
-node server-simple.js
+# Give FFmpeg a moment to start
+echo "⏱️  Waiting for FFmpeg to initialize..."
+sleep 10
+
+# Start the web server with full functionality
+echo "🌊 Starting full web server..."
+exec node server.js
