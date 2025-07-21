@@ -129,9 +129,9 @@ app.use((error, req, res, next) => {
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Stream relay server running on port ${PORT}`);
-    console.log(`Stream available at: http://localhost:${PORT}/stream/output.m3u8`);
-    console.log(`Web player at: http://localhost:${PORT}`);
+    console.log(`🌊 Stream relay server running on port ${PORT}`);
+    console.log(`📺 Stream available at: http://localhost:${PORT}/stream/output.m3u8`);
+    console.log(`🌐 Web player at: http://localhost:${PORT}`);
 });
 
 // Graceful shutdown
