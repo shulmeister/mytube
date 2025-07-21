@@ -133,6 +133,32 @@ app.get('/api/stream/info', (req, res) => {
     }
 });
 
+// API endpoint to get FFmpeg logs (for debugging)
+app.get('/api/logs', (req, res) => {
+    const logFile = path.join(__dirname, 'logs', 'ffmpeg.log');
+    
+    try {
+        if (fs.existsSync(logFile)) {
+            const logs = fs.readFileSync(logFile, 'utf8');
+            const lines = logs.split('\n').slice(-50); // Last 50 lines
+            res.json({
+                logs: lines,
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            res.json({
+                logs: ['Log file not found'],
+                timestamp: new Date().toISOString()
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            error: 'Failed to read log file',
+            message: error.message
+        });
+    }
+});
+
 // Catch-all route to serve index.html
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

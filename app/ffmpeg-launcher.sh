@@ -30,15 +30,25 @@ construct_url() {
     local date_str=$(get_date_string)
     local url="${BASE_URL}/ph${date_str}/ph${date_str}_1080p.m3u8"
     
+    echo "$(date): Testing current date URL: $url" >> "$LOG_FILE"
+    
     # Test if today's stream exists
-    if curl -s --head "$url" | head -n 1 | grep -q "200 OK"; then
+    if curl -s --head --max-time 10 "$url" | head -n 1 | grep -q "200 OK"; then
+        echo "$(date): Using current date stream: $url" >> "$LOG_FILE"
         echo "$url"
     else
         # Fallback to yesterday's stream
         local fallback_date=$(get_fallback_date_string)
         local fallback_url="${BASE_URL}/ph${fallback_date}/ph${fallback_date}_1080p.m3u8"
-        echo "$(date): Today's stream not available, using fallback: $fallback_url" >> "$LOG_FILE"
-        echo "$fallback_url"
+        echo "$(date): Current date stream not available, testing fallback: $fallback_url" >> "$LOG_FILE"
+        
+        if curl -s --head --max-time 10 "$fallback_url" | head -n 1 | grep -q "200 OK"; then
+            echo "$(date): Using fallback date stream: $fallback_url" >> "$LOG_FILE"
+            echo "$fallback_url"
+        else
+            echo "$(date): ERROR - Neither current nor fallback stream available" >> "$LOG_FILE"
+            echo "$url"  # Return original URL anyway
+        fi
     fi
 }
 
@@ -83,16 +93,23 @@ start_ffmpeg() {
     local source_url=$(construct_url)
     echo "$(date): Starting FFmpeg with source: $source_url" >> "$LOG_FILE"
     
-    # Test source URL accessibility
-    if ! curl -s --head "$source_url" | head -n 1 | grep -q "200 OK"; then
+    # Test source URL accessibility with more detailed logging
+    echo "$(date): Testing source URL accessibility..." >> "$LOG_FILE"
+    local test_result=$(curl -s --head --max-time 10 "$source_url" | head -n 1)
+    echo "$(date): Source URL test result: $test_result" >> "$LOG_FILE"
+    
+    if ! echo "$test_result" | grep -q "200 OK"; then
         echo "$(date): ERROR - Source URL not accessible: $source_url" >> "$LOG_FILE"
+        echo "$(date): Curl response: $test_result" >> "$LOG_FILE"
         return 1
     fi
     
     # Clean up any existing segments
     rm -f "$OUTPUT_DIR"/*.ts "$OUTPUT_DIR"/*.m3u8
     
-    # Start FFmpeg in background
+    echo "$(date): Starting FFmpeg process..." >> "$LOG_FILE"
+    
+    # Start FFmpeg in background with more robust settings
     ffmpeg -y \
         -i "$source_url" \
         -c copy \
@@ -103,6 +120,10 @@ start_ffmpeg() {
         -hls_delete_threshold 5 \
         -hls_flags delete_segments+append_list \
         -hls_segment_filename "$OUTPUT_DIR/segment_%03d.ts" \
+        -reconnect 1 \
+        -reconnect_at_eof 1 \
+        -reconnect_streamed 1 \
+        -reconnect_delay_max 2 \
         "$OUTPUT_DIR/output.m3u8" \
         >> "$LOG_FILE" 2>&1 &
     
