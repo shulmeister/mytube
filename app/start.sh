@@ -12,14 +12,14 @@ echo "🌐 Environment variables:"
 echo "   PORT: $PORT"
 echo "   NODE_ENV: $NODE_ENV"
 
-# Start FFmpeg monitor in background
-echo "🎥 Starting FFmpeg monitor..."
+# Create stream directory to ensure health checks pass
+echo "📁 Creating stream directory..."
+mkdir -p /app/stream
+
+# Start FFmpeg monitor in background - don't wait for it
+echo "🎥 Starting FFmpeg monitor in background..."
 bash /app/ffmpeg-launcher.sh monitor &
 
-# Give FFmpeg a moment to start
-echo "⏱️  Waiting for FFmpeg to initialize..."
-sleep 10
-
-# Start the web server with full functionality
-echo "🌊 Starting full web server..."
+# Start the web server immediately - don't wait for FFmpeg
+echo "🌊 Starting web server (FFmpeg will initialize in background)..."
 exec node server.js
