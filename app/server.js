@@ -53,7 +53,16 @@ app.use('/stream', (req, res, next) => {
 });
 
 // Serve static files from public directory
-app.use('/', express.static(path.join(__dirname, 'public')));
+app.use('/', express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, path) => {
+        // Add cache-busting for HTML files
+        if (path.endsWith('.html')) {
+            res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.set('Pragma', 'no-cache');
+            res.set('Expires', '0');
+        }
+    }
+}));
 
 // Serve HLS stream files
 app.use('/stream', express.static(path.join(__dirname, 'stream')));
@@ -192,6 +201,30 @@ app.post('/api/stream/change-date', express.json(), (req, res) => {
         dateStr: dateStr,
         note: 'Full implementation requires FFmpeg restart with new URL'
     });
+});
+
+// Debug endpoint to check HTML content
+app.get('/api/debug/html-check', (req, res) => {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    try {
+        const content = fs.readFileSync(indexPath, 'utf8');
+        const hasSelector = content.includes('Select Stream Date');
+        const hasFunction = content.includes('populateStreamSelector');
+        const hasStyles = content.includes('stream-selector');
+        
+        res.json({
+            hasSelector,
+            hasFunction,
+            hasStyles,
+            contentLength: content.length,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: 'Failed to read HTML file',
+            message: error.message
+        });
+    }
 });
 
 // Catch-all route to serve index.html
