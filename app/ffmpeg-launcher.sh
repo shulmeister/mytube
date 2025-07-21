@@ -18,12 +18,48 @@ mkdir -p "/app/logs"
 # Function to get current Mountain Time date in YYMMDD format
 get_date_string() {
     # Use Mountain Time (Denver timezone) instead of UTC
-    TZ=America/Denver date +"%y%m%d"
+    # Try multiple methods to ensure it works in Docker containers
+    if command -v gdate >/dev/null 2>&1; then
+        # macOS with coreutils
+        TZ=America/Denver gdate +"%y%m%d"
+    elif [ -f /usr/share/zoneinfo/America/Denver ]; then
+        # Linux with timezone data
+        TZ=America/Denver date +"%y%m%d"
+    else
+        # Fallback: calculate manually (UTC-7 for MST, UTC-6 for MDT)
+        # For now, assume MDT (UTC-6) during summer
+        local utc_hour=$(date -u +"%H")
+        local utc_date=$(date -u +"%y%m%d")
+        
+        # If it's before 6 AM UTC, it's still the previous day in Mountain Time
+        if [ "$utc_hour" -lt 6 ]; then
+            if command -v gdate >/dev/null 2>&1; then
+                gdate -u -d "yesterday" +"%y%m%d"
+            else
+                date -u -d "yesterday" +"%y%m%d" 2>/dev/null || date -u -v-1d +"%y%m%d" 2>/dev/null || echo "$utc_date"
+            fi
+        else
+            echo "$utc_date"
+        fi
+    fi
 }
 
 # Function to get fallback date (yesterday in Mountain Time) in YYMMDD format
 get_fallback_date_string() {
-    TZ=America/Denver date -d "yesterday" +"%y%m%d" 2>/dev/null || TZ=America/Denver date -v-1d +"%y%m%d" 2>/dev/null || TZ=America/Denver date +"%y%m%d"
+    # Try multiple methods for getting yesterday in Mountain Time
+    if command -v gdate >/dev/null 2>&1; then
+        TZ=America/Denver gdate -d "yesterday" +"%y%m%d"
+    elif [ -f /usr/share/zoneinfo/America/Denver ]; then
+        TZ=America/Denver date -d "yesterday" +"%y%m%d" 2>/dev/null || TZ=America/Denver date -v-1d +"%y%m%d" 2>/dev/null
+    else
+        # Manual fallback
+        local current_mt=$(get_date_string)
+        if command -v gdate >/dev/null 2>&1; then
+            gdate -d "$current_mt -1 day" +"%y%m%d" 2>/dev/null || echo "$current_mt"
+        else
+            date -d "yesterday" +"%y%m%d" 2>/dev/null || date -v-1d +"%y%m%d" 2>/dev/null || echo "$current_mt"
+        fi
+    fi
 }
 
 # Function to construct the stream URL with fallback
@@ -31,6 +67,7 @@ construct_url() {
     local date_str=$(get_date_string)
     local url="${BASE_URL}/ph${date_str}/ph${date_str}_1080p.m3u8"
     
+    echo "$(date): Mountain Time date calculated as: $date_str" >> "$LOG_FILE"
     echo "$(date): Testing current date URL: $url" >> "$LOG_FILE"
     
     # Test if today's stream exists
@@ -40,10 +77,31 @@ construct_url() {
         return
     fi
     
-    # If today's stream doesn't exist, check the last 7 days to find the most recent available stream
-    echo "$(date): Current date stream not available, checking recent dates..." >> "$LOG_FILE"
+    # Known Phish show dates for July 2025 (based on tour schedule)
+    # Jul 18, 19, 20: United Center, Chicago
+    # Jul 15, 16: TD Pavilion at The Mann, Philadelphia  
+    # Jul 11, 12, 13: North Charleston Coliseum
+    # Jul 9: Schottenstein Center, Columbus
+    # Jul 3, 4, 5: Folsom Field, Boulder
+    local known_show_dates=("250720" "250719" "250718" "250716" "250715" "250713" "250712" "250711" "250709" "250705" "250704" "250703")
     
-    for i in {1..7}; do
+    echo "$(date): Current date stream not available, checking known Phish show dates..." >> "$LOG_FILE"
+    
+    for show_date in "${known_show_dates[@]}"; do
+        local test_url="${BASE_URL}/ph${show_date}/ph${show_date}_1080p.m3u8"
+        echo "$(date): Testing known show date $show_date: $test_url" >> "$LOG_FILE"
+        
+        if curl -s --head --max-time 10 "$test_url" | head -n 1 | grep -q "200 OK"; then
+            echo "$(date): Found available stream from show date $show_date: $test_url" >> "$LOG_FILE"
+            echo "$test_url"
+            return
+        fi
+    done
+    
+    # If no known show dates work, check the last 14 days as fallback
+    echo "$(date): No known show dates available, checking recent dates..." >> "$LOG_FILE"
+    
+    for i in {1..14}; do
         local test_date
         if command -v gdate >/dev/null 2>&1; then
             # Use gdate if available (macOS with coreutils)
@@ -63,7 +121,7 @@ construct_url() {
         fi
     done
     
-    echo "$(date): ERROR - No available streams found in the last 7 days" >> "$LOG_FILE"
+    echo "$(date): ERROR - No available streams found" >> "$LOG_FILE"
     echo "$url"  # Return today's URL as fallback even if not available
 }
 
