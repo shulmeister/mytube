@@ -15,14 +15,15 @@ PID_FILE="/app/ffmpeg.pid"
 mkdir -p "$OUTPUT_DIR"
 mkdir -p "/app/logs"
 
-# Function to get current UTC date in YYMMDD format
+# Function to get current Mountain Time date in YYMMDD format
 get_date_string() {
-    date -u +"%y%m%d"
+    # Use Mountain Time (Denver timezone) instead of UTC
+    TZ=America/Denver date +"%y%m%d"
 }
 
-# Function to get fallback date (yesterday) in YYMMDD format
+# Function to get fallback date (yesterday in Mountain Time) in YYMMDD format
 get_fallback_date_string() {
-    date -u -d "yesterday" +"%y%m%d" 2>/dev/null || date -u -v-1d +"%y%m%d" 2>/dev/null || date -u +"%y%m%d"
+    TZ=America/Denver date -d "yesterday" +"%y%m%d" 2>/dev/null || TZ=America/Denver date -v-1d +"%y%m%d" 2>/dev/null || TZ=America/Denver date +"%y%m%d"
 }
 
 # Function to construct the stream URL with fallback
@@ -36,20 +37,34 @@ construct_url() {
     if curl -s --head --max-time 10 "$url" | head -n 1 | grep -q "200 OK"; then
         echo "$(date): Using current date stream: $url" >> "$LOG_FILE"
         echo "$url"
-    else
-        # Fallback to yesterday's stream
-        local fallback_date=$(get_fallback_date_string)
-        local fallback_url="${BASE_URL}/ph${fallback_date}/ph${fallback_date}_1080p.m3u8"
-        echo "$(date): Current date stream not available, testing fallback: $fallback_url" >> "$LOG_FILE"
-        
-        if curl -s --head --max-time 10 "$fallback_url" | head -n 1 | grep -q "200 OK"; then
-            echo "$(date): Using fallback date stream: $fallback_url" >> "$LOG_FILE"
-            echo "$fallback_url"
-        else
-            echo "$(date): ERROR - Neither current nor fallback stream available" >> "$LOG_FILE"
-            echo "$url"  # Return original URL anyway
-        fi
+        return
     fi
+    
+    # If today's stream doesn't exist, check the last 7 days to find the most recent available stream
+    echo "$(date): Current date stream not available, checking recent dates..." >> "$LOG_FILE"
+    
+    for i in {1..7}; do
+        local test_date
+        if command -v gdate >/dev/null 2>&1; then
+            # Use gdate if available (macOS with coreutils)
+            test_date=$(TZ=America/Denver gdate -d "$i days ago" +"%y%m%d")
+        else
+            # Use date with different syntax for Linux
+            test_date=$(TZ=America/Denver date -d "$i days ago" +"%y%m%d" 2>/dev/null || TZ=America/Denver date -v-${i}d +"%y%m%d" 2>/dev/null)
+        fi
+        
+        local test_url="${BASE_URL}/ph${test_date}/ph${test_date}_1080p.m3u8"
+        echo "$(date): Testing date $test_date ($i days ago): $test_url" >> "$LOG_FILE"
+        
+        if curl -s --head --max-time 10 "$test_url" | head -n 1 | grep -q "200 OK"; then
+            echo "$(date): Found available stream from $i days ago: $test_url" >> "$LOG_FILE"
+            echo "$test_url"
+            return
+        fi
+    done
+    
+    echo "$(date): ERROR - No available streams found in the last 7 days" >> "$LOG_FILE"
+    echo "$url"  # Return today's URL as fallback even if not available
 }
 
 # Function to clean up old segments

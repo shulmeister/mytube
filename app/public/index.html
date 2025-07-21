@@ -625,11 +625,12 @@
                 
                 document.getElementById('segment-count').textContent = data.segmentCount || 0;
                 
-                // Generate current expected source URL
+                // Generate current expected source URL using Mountain Time
                 const now = new Date();
-                const year = String(now.getUTCFullYear()).slice(-2);
-                const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-                const day = String(now.getUTCDate()).padStart(2, '0');
+                const mountainTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Denver"}));
+                const year = String(mountainTime.getFullYear()).slice(-2);
+                const month = String(mountainTime.getMonth() + 1).padStart(2, '0');
+                const day = String(mountainTime.getDate()).padStart(2, '0');
                 const dateStr = year + month + day;
                 
                 document.getElementById('stream-source').textContent = dateStr;
@@ -649,8 +650,9 @@
 
         function updateStreamDate() {
             const now = new Date();
+            const mountainTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Denver"}));
             document.getElementById('stream-date').textContent = 
-                `${now.toLocaleDateString()}`;
+                mountainTime.toLocaleDateString();
         }
 
         function refreshStream() {
@@ -689,24 +691,27 @@
             const selector = document.getElementById('stream-date-selector');
             const streamList = document.getElementById('stream-list');
             
+            // Use Mountain Time instead of UTC/local time
             const today = new Date();
+            const mountainToday = new Date(today.toLocaleString("en-US", {timeZone: "America/Denver"}));
             const streams = [];
             
-            // Generate dates for the last 30 days
+            // Generate dates for the last 30 days in Mountain Time
             for (let i = 0; i < 30; i++) {
-                const date = new Date(today);
+                const date = new Date(mountainToday);
                 date.setDate(date.getDate() - i);
                 
-                const year = String(date.getUTCFullYear()).slice(-2);
-                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-                const day = String(date.getUTCDate()).padStart(2, '0');
+                const year = String(date.getFullYear()).slice(-2);
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
                 const dateStr = year + month + day;
                 
                 const displayDate = date.toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'short', 
                     day: 'numeric',
-                    year: 'numeric'
+                    year: 'numeric',
+                    timeZone: 'America/Denver'
                 });
                 
                 streams.push({
@@ -757,6 +762,8 @@
 
         async function checkStreamAvailability() {
             // Check availability of first 10 streams
+            const results = [];
+            
             for (const stream of availableStreams.slice(0, 10)) {
                 try {
                     const response = await fetch(stream.url, { method: 'HEAD' });
@@ -765,11 +772,13 @@
                     if (response.ok) {
                         statusElement.textContent = 'Available';
                         statusElement.className = 'stream-status available';
+                        results.push({ date: stream.dateStr, available: true });
                     } else {
                         statusElement.textContent = 'Unavailable';
                         statusElement.className = 'stream-status unavailable';
                         const item = statusElement.closest('.stream-item');
                         item.classList.add('unavailable');
+                        results.push({ date: stream.dateStr, available: false });
                     }
                 } catch (error) {
                     const statusElement = document.getElementById(`status-${stream.dateStr}`);
@@ -777,10 +786,21 @@
                     statusElement.className = 'stream-status unavailable';
                     const item = statusElement.closest('.stream-item');
                     item.classList.add('unavailable');
+                    results.push({ date: stream.dateStr, available: false });
                 }
                 
                 // Small delay to avoid overwhelming the server
-                await new Promise(resolve => setTimeout(resolve, 200));
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // Log the pattern for debugging
+            const availableDates = results.filter(r => r.available).map(r => r.date);
+            console.log('Available stream dates:', availableDates);
+            
+            // If we found available streams, highlight the most recent one
+            if (availableDates.length > 0) {
+                const mostRecent = availableDates[0]; // First in array is most recent
+                console.log('Most recent available stream:', mostRecent);
             }
         }
 
