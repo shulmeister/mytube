@@ -2,19 +2,19 @@
 
 set -e
 
-echo "Starting Stream Relay Application..."
-echo "Current user: $(whoami)"
-echo "Current directory: $(pwd)"
-echo "Contents of /app:"
+echo "🚀 Starting Stream Relay Application..."
+echo "📊 Current user: $(whoami)"
+echo "📁 Current directory: $(pwd)"
+echo "📋 Contents of /app:"
 ls -la /app/
 
-# Start FFmpeg monitor in background
-echo "Starting FFmpeg monitor..."
-bash /app/ffmpeg-launcher.sh monitor &
+echo "🌐 Environment variables:"
+echo "   PORT: $PORT"
+echo "   NODE_ENV: $NODE_ENV"
 
-# Give FFmpeg a moment to start
-sleep 5
+# TEMPORARILY DISABLE FFMPEG TO DEBUG
+echo "⚠️  Skipping FFmpeg for debugging..."
+# bash /app/ffmpeg-launcher.sh monitor &
 
-# Start the web server
-echo "Starting web server..."
-exec node server.js
+echo "🎯 Starting web server with simplified version..."
+node server-simple.js
