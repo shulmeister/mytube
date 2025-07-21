@@ -24,9 +24,10 @@ RUN npm ci --only=production && npm cache clean --force
 # Copy application code
 COPY . .
 
-# Create necessary directories
+# Create necessary directories and set permissions
 RUN mkdir -p /app/stream /app/logs && \
-    chmod +x /app/ffmpeg-launcher.sh
+    chmod +x /app/ffmpeg-launcher.sh && \
+    chmod +x /app/start.sh
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
@@ -42,9 +43,5 @@ EXPOSE 3000
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
-
-# Start script
-COPY --chown=nodejs:nodejs start.sh /app/start.sh
-RUN chmod +x /app/start.sh
 
 CMD ["/app/start.sh"]
