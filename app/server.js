@@ -50,7 +50,7 @@ app.use('/stream', (req, res, next) => {
 });
 
 // Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/', express.static(path.join(__dirname, 'public')));
 
 // Serve HLS stream files
 app.use('/stream', express.static(path.join(__dirname, 'stream')));
@@ -83,6 +83,11 @@ app.get('/health', (req, res) => {
             timestamp: new Date().toISOString()
         });
     }
+});
+
+// Root route to explicitly serve index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // API endpoint to get stream info
