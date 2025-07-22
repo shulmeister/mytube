@@ -171,38 +171,6 @@ app.get('/api/logs', (req, res) => {
     }
 });
 
-// API endpoint to change stream date
-app.post('/api/stream/change-date', express.json(), (req, res) => {
-    const { dateStr } = req.body;
-    
-    if (!dateStr || dateStr === 'auto') {
-        // Use automatic date selection
-        res.json({ 
-            success: true, 
-            message: 'Switched to automatic date selection',
-            dateStr: 'auto'
-        });
-        return;
-    }
-    
-    // Validate date format (YYMMDD)
-    if (!/^\d{6}$/.test(dateStr)) {
-        res.status(400).json({
-            error: 'Invalid date format. Expected YYMMDD'
-        });
-        return;
-    }
-    
-    // For now, we'll just return success - actual implementation would
-    // require modifying the FFmpeg launcher to use a specific date
-    res.json({
-        success: true,
-        message: `Stream date change requested: ${dateStr}`,
-        dateStr: dateStr,
-        note: 'Full implementation requires FFmpeg restart with new URL'
-    });
-});
-
 // API endpoint to manually restart FFmpeg
 app.post('/api/stream/restart', (req, res) => {
     const { spawn } = require('child_process');

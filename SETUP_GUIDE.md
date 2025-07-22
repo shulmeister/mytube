@@ -179,16 +179,15 @@ Edit `ffmpeg-launcher.sh` to modify:
 
 ### Main Features
 - **YouTube-style Player**: Clean, responsive video interface
-- **Stream Date Selector**: Choose from available show dates
-- **Auto-detection**: Automatically loads today's stream if available
-- **Manual Controls**: Force restart stream, check status
+- **Live Stream Focus**: Automatically loads today's live stream
+- **Stream Controls**: Force restart stream, check status
 - **Mobile Responsive**: Works on phones and tablets
 
-### Stream Selection
-1. Use the dropdown on the right to select different show dates
-2. Click "Load Stream" to switch to that date
-3. Use "Check Stream Status" to verify availability
-4. "Restart Stream" forces a fresh connection
+### Stream Controls
+1. **Auto-detection**: Automatically loads today's stream if available
+2. **Check Stream Status**: Verify current stream availability
+3. **Restart Stream**: Forces a fresh connection if needed
+4. **Real-time Status**: Live monitoring of stream health
 
 ## 🛠️ Troubleshooting
 
