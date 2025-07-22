@@ -116,37 +116,155 @@ docker stop mytube
 docker start mytube
 ```
 
-## ☁️ Cloud Deployment Options
+## ☁️ Cloud Deployment (DigitalOcean Droplet)
 
-### Option 1: Render.com (Free Tier Available)
+### Recommended: DigitalOcean Droplet Setup
 
-1. **Fork the repository** on GitHub to your account
-2. **Connect to Render**:
-   - Go to https://render.com
-   - Sign up/login with GitHub
-   - Click "New +" → "Web Service"
-   - Connect your forked repository
-   - Select the `mytube/app` directory as root
-3. **Configure deployment**:
-   - Build Command: `npm install`
-   - Start Command: `./start.sh`
-   - Add environment variable: `PORT=8080`
-4. **Deploy**: Click "Create Web Service"
+**Create a Droplet:**
+1. **Login to DigitalOcean** and create a new Droplet
+2. **Choose Image**: Ubuntu 22.04 LTS
+3. **Select Plan**: Basic plan, $12/month (2GB RAM, 1 vCPU) minimum
+4. **Authentication**: Add your SSH key
+5. **Create Droplet** and note the IP address
 
-### Option 2: Railway.app
+**Initial Server Setup:**
+```bash
+# SSH into your droplet
+ssh root@YOUR_DROPLET_IP
 
-1. Visit https://railway.app
-2. Connect GitHub and select your forked repository
-3. Railway will auto-detect the Node.js app
-4. Set root directory to `app/`
-5. Deploy automatically
+# Update system packages
+apt update && apt upgrade -y
 
-### Option 3: DigitalOcean App Platform
+# Install Node.js 18+
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+apt-get install -y nodejs
 
-1. Use the included `.do/app.yaml` configuration
-2. Create new app on DigitalOcean
-3. Connect your GitHub repository
-4. Select the configuration file
+# Install other dependencies
+apt install -y git ffmpeg nginx ufw
+
+# Verify installations
+node --version
+ffmpeg -version
+```
+
+**Deploy the Application:**
+```bash
+# Clone the repository
+git clone https://github.com/shulmeister/mytube.git
+cd mytube/app
+
+# Install dependencies
+npm install
+
+# Make scripts executable
+chmod +x ffmpeg-launcher.sh start.sh deploy.sh monitor.sh
+
+# Create logs directory
+mkdir -p logs
+
+# Test run (should work on port 8080)
+npm start
+```
+
+**Setup as System Service (Production):**
+```bash
+# Create systemd service file
+sudo tee /etc/systemd/system/mytube.service > /dev/null <<EOF
+[Unit]
+Description=MyTube Stream Relay
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/mytube/app
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PORT=8080
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable and start the service
+sudo systemctl enable mytube
+sudo systemctl start mytube
+sudo systemctl status mytube
+```
+
+**Setup Nginx Reverse Proxy:**
+```bash
+# Create Nginx configuration
+sudo tee /etc/nginx/sites-available/mytube > /dev/null <<EOF
+server {
+    listen 80;
+    server_name YOUR_DROPLET_IP;  # Replace with your domain if you have one
+
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+    }
+
+    # Serve HLS segments directly
+    location /stream/ {
+        proxy_pass http://localhost:8080/stream/;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_cache off;
+        add_header Cache-Control no-cache;
+        add_header Access-Control-Allow-Origin *;
+    }
+}
+EOF
+
+# Enable the site
+sudo ln -s /etc/nginx/sites-available/mytube /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+**Configure Firewall:**
+```bash
+# Enable UFW and allow necessary ports
+ufw enable
+ufw allow ssh
+ufw allow 'Nginx Full'
+ufw status
+```
+
+**Monitor the Service:**
+```bash
+# Check service status
+sudo systemctl status mytube
+
+# View logs
+sudo journalctl -u mytube -f
+
+# Restart if needed
+sudo systemctl restart mytube
+```
+
+### Alternative Cloud Options
+
+#### Option 2: Render.com (Free Tier Available)
+1. Fork the repository on GitHub
+2. Connect to Render.com with GitHub
+3. Create Web Service, select `mytube/app` directory
+4. Configure: Build Command `npm install`, Start Command `./start.sh`
+
+#### Option 3: Railway.app
+1. Visit railway.app, connect GitHub repository
+2. Set root directory to `app/`
+3. Deploys automatically
 
 ## 🔧 Configuration
 
@@ -199,40 +317,86 @@ Edit `ffmpeg-launcher.sh` to modify:
 ps aux | grep ffmpeg
 
 # Check application logs
-docker logs mytube
+sudo journalctl -u mytube -f
 # OR for local development:
 tail -f logs/app.log
+
+# Check if service is running
+sudo systemctl status mytube
 ```
 
 #### 2. Port Already in Use
 ```bash
 # Find what's using port 8080
-lsof -i :8080
+sudo lsof -i :8080
 
 # Kill the process (replace PID)
-kill -9 <PID>
+sudo kill -9 <PID>
 
-# Or use different port
-PORT=3000 npm start
+# Or restart the service
+sudo systemctl restart mytube
 ```
 
-#### 3. FFmpeg Not Found
+#### 3. DigitalOcean Droplet Issues
 ```bash
-# Install FFmpeg
-# macOS:
-brew install ffmpeg
+# Check if Nginx is running
+sudo systemctl status nginx
 
-# Ubuntu/Debian:
+# Test Nginx configuration
+sudo nginx -t
+
+# Check UFW firewall status
+sudo ufw status
+
+# View system resources
+htop
+df -h
+free -h
+```
+
+#### 4. FFmpeg Not Found
+```bash
+# Install FFmpeg on Ubuntu
+sudo apt update
 sudo apt install ffmpeg
 
 # Verify installation
 ffmpeg -version
 ```
 
-#### 4. Permission Denied on Scripts
+#### 5. Permission Denied on Scripts
 ```bash
 # Make scripts executable
 chmod +x ffmpeg-launcher.sh start.sh
+
+# Check file ownership
+ls -la *.sh
+```
+
+### DigitalOcean Specific Debugging
+
+#### Service Management:
+```bash
+# Restart the MyTube service
+sudo systemctl restart mytube
+
+# View detailed logs
+sudo journalctl -u mytube --since "1 hour ago"
+
+# Check service configuration
+sudo systemctl cat mytube
+```
+
+#### Nginx Issues:
+```bash
+# Check Nginx error logs
+sudo tail -f /var/log/nginx/error.log
+
+# Test proxy connection
+curl -I http://localhost:8080
+
+# Reload Nginx configuration
+sudo systemctl reload nginx
 ```
 
 ### Debug Mode
@@ -250,28 +414,73 @@ curl http://localhost:8080/api/health
 ## 📊 Monitoring
 
 ### Health Checks
-- **Web**: http://localhost:8080/api/health
-- **Stream Status**: http://localhost:8080/api/status  
-- **Restart Stream**: http://localhost:8080/api/restart
+- **Web**: http://YOUR_DROPLET_IP/api/health
+- **Stream Status**: http://YOUR_DROPLET_IP/api/status  
+- **Restart Stream**: http://YOUR_DROPLET_IP/api/restart
+
+### DigitalOcean Droplet Monitoring
+```bash
+# Check system resources
+htop                    # CPU and memory usage
+df -h                   # Disk usage
+free -h                 # Memory usage
+sudo systemctl status mytube  # Service status
+
+# Monitor logs in real-time
+sudo journalctl -u mytube -f
+
+# Check network connections
+sudo netstat -tlnp | grep :8080
+```
 
 ### Log Files
-- **Application**: `logs/app.log`
-- **FFmpeg**: `logs/ffmpeg.log`
-- **Container**: `docker logs mytube`
+- **System Service**: `sudo journalctl -u mytube`
+- **Application**: `~/mytube/app/logs/app.log`
+- **FFmpeg**: `~/mytube/app/logs/ffmpeg.log`
+- **Nginx**: `/var/log/nginx/access.log` and `/var/log/nginx/error.log`
 
 ## 🔐 Security Notes
 
+### DigitalOcean Droplet Security
+1. **SSH Key Authentication**: Disable password login
+   ```bash
+   # Edit SSH config
+   sudo nano /etc/ssh/sshd_config
+   # Set: PasswordAuthentication no
+   sudo systemctl restart ssh
+   ```
+
+2. **Firewall Configuration**: Use UFW to limit access
+   ```bash
+   sudo ufw enable
+   sudo ufw allow ssh
+   sudo ufw allow 'Nginx Full'
+   sudo ufw status numbered
+   ```
+
+3. **Regular Updates**: Keep system updated
+   ```bash
+   sudo apt update && sudo apt upgrade -y
+   ```
+
+4. **SSL Certificate** (Optional, if using domain):
+   ```bash
+   # Install Certbot for Let's Encrypt
+   sudo apt install certbot python3-certbot-nginx
+   sudo certbot --nginx -d yourdomain.com
+   ```
+
 ### Production Deployment
-1. **Use HTTPS**: Enable SSL certificates
-2. **Firewall**: Only expose necessary ports (80, 443)
-3. **Updates**: Keep dependencies updated
+1. **Use HTTPS**: Enable SSL certificates for domains
+2. **Firewall**: Only expose necessary ports (22, 80, 443)
+3. **Updates**: Keep dependencies updated with `npm audit`
 4. **Monitoring**: Set up log monitoring and alerts
 
-### Resource Requirements
-- **CPU**: 1-2 cores minimum (for FFmpeg processing)
-- **RAM**: 512MB minimum, 1GB recommended
-- **Storage**: 2GB minimum (for stream segments)
-- **Network**: Stable internet connection
+### Resource Requirements (DigitalOcean)
+- **Minimum Droplet**: $12/month (2GB RAM, 1 vCPU, 50GB SSD)
+- **Recommended**: $24/month (4GB RAM, 2 vCPU) for better performance
+- **Storage**: 50GB minimum (for OS, app, and stream segments)
+- **Network**: DigitalOcean provides excellent bandwidth
 
 ## 🎯 Advanced Configuration
 
@@ -315,14 +524,26 @@ If you encounter issues:
 
 ## 🎉 Success!
 
-Once running, you should see:
-- ✅ Application starts without errors
-- ✅ FFmpeg begins processing the stream
-- ✅ Web interface loads at http://localhost:8080
-- ✅ Video player shows stream content
-- ✅ Stream selector shows available dates
+Once running on your DigitalOcean Droplet, you should see:
+- ✅ **Application starts without errors**: `sudo systemctl status mytube` shows active
+- ✅ **FFmpeg begins processing**: Check logs with `sudo journalctl -u mytube -f`
+- ✅ **Web interface loads**: Visit `http://YOUR_DROPLET_IP`
+- ✅ **Video player shows stream**: Live Phish stream should be playing
+- ✅ **Nginx proxy working**: Port 80 redirects to the app on port 8080
 
-Enjoy your personal Phish streaming setup! 🐠🎵
+### Quick Health Check Commands:
+```bash
+# Check all services
+sudo systemctl status mytube nginx
+
+# Test the application
+curl -I http://localhost:8080/api/health
+
+# Monitor in real-time
+sudo journalctl -u mytube -f
+```
+
+Enjoy your personal Phish streaming setup running 24/7 on DigitalOcean! 🐠🎵
 
 ---
 
