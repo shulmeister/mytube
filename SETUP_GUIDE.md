@@ -1,6 +1,6 @@
 # 🌊 Shulmeister's MyTube - Complete Setup Guide
 
-This guide will help you set up and run the Phish stream relay system on any computer. This is a self-hosted HLS stream relay that automatically pulls daily Phish shows from your configured stream source and serves them through a YouTube-style interface.
+This guide will help you set up and run the live stream relay system on any computer. This is a self-hosted HLS stream relay that automatically pulls daily shows from your configured stream source and serves them through a YouTube-style interface.
 
 ## 📋 Prerequisites
 
@@ -554,7 +554,7 @@ curl -I http://localhost:8080/api/health
 sudo journalctl -u mytube -f
 ```
 
-Enjoy your personal Phish streaming setup running 24/7 on DigitalOcean! 🐠🎵
+Enjoy your personal live streaming setup running 24/7 on DigitalOcean! 🎵
 
 ---
 

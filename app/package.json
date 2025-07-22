@@ -1,7 +1,7 @@
 {
   "name": "stream-relay",
   "version": "1.0.0",
-  "description": "Self-hosted HLS stream relay with FFmpeg",
+  "description": "Self-hosted HLS live stream relay with FFmpeg",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

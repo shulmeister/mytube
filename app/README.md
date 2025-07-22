@@ -1,11 +1,11 @@
-# 🌊 Self-Hosted Stream Relay
+# 🌊 Self-Hosted Live Stream Relay
 
-A complete self-hosted HLS stream relay system using FFmpeg that automatically pulls daily streams and serves them via a modern web interface. Perfect for cloud deployment with automatic restarts and monitoring.
+A complete self-hosted HLS stream relay system using FFmpeg that automatically pulls daily streams from your configured source and serves them via a modern web interface. Perfect for cloud deployment with automatic restarts and monitoring.
 
 ## ✨ Features
 
 - 🔄 **Automatic Daily Stream Updates**: Constructs source URLs based on current date and your configured stream source
-- 🎥 **HLS Streaming**: FFmpeg-powered HLS segmentation and delivery
+- 🎥 **HLS Streaming**: FFmpeg-powered HLS segmentation and delivery  
 - 📱 **Modern Web Player**: Video.js player with live controls and status monitoring
 - ☁️ **Cloud-Ready**: Docker containerized for easy deployment
 - 🛠️ **Auto-Recovery**: Automatic FFmpeg restart on failures

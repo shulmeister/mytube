@@ -165,5 +165,5 @@ else
 fi
 
 echo ""
-echo "🐠🎵 Enjoy your personal Phish streaming setup!"
+echo "� Your personal live streaming setup is now running!"
 echo "Visit http://$DROPLET_IP to start watching!"

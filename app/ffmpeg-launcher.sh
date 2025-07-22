@@ -77,7 +77,7 @@ construct_url() {
         return
     fi
     
-    # Known Phish show dates for July 2025 (based on tour schedule)
+    # Known show dates for July 2025 (based on tour schedule)
     # Jul 18, 19, 20: United Center, Chicago
     # Jul 15, 16: TD Pavilion at The Mann, Philadelphia  
     # Jul 11, 12, 13: North Charleston Coliseum
@@ -85,7 +85,7 @@ construct_url() {
     # Jul 3, 4, 5: Folsom Field, Boulder
     local known_show_dates=("250720" "250719" "250718" "250716" "250715" "250713" "250712" "250711" "250709" "250705" "250704" "250703")
     
-    echo "$(date): Current date stream not available, checking known Phish show dates..." >> "$LOG_FILE"
+    echo "$(date): Current date stream not available, checking known show dates..." >> "$LOG_FILE"
     
     for show_date in "${known_show_dates[@]}"; do
         local test_url="${BASE_URL}/ph${show_date}/ph${show_date}_1080p.m3u8"
