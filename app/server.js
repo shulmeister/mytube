@@ -227,6 +227,29 @@ app.post('/api/stream/restart', (req, res) => {
     }
 });
 
+// API endpoint to test direct stream access
+app.get('/api/test/direct-stream', async (req, res) => {
+    try {
+        const testUrl = 'https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8';
+        const response = await fetch(testUrl, { method: 'HEAD' });
+        
+        res.json({
+            url: testUrl,
+            accessible: response.ok,
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries()),
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: 'Failed to test stream URL',
+            message: error.message,
+            url: 'https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8'
+        });
+    }
+});
+
 // API endpoint to test stream URL availability (proxy for CORS)
 app.get('/api/stream/test-url', async (req, res) => {
     const { url } = req.query;
@@ -278,6 +301,57 @@ app.get('/api/debug/html-check', (req, res) => {
             message: error.message
         });
     }
+});
+
+// Simple proxy endpoint to test direct streaming
+app.get('/api/test-stream', (req, res) => {
+    const https = require('https');
+    const streamUrl = 'https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8';
+    
+    https.get(streamUrl, (response) => {
+        res.set('Content-Type', 'application/vnd.apple.mpegurl');
+        res.set('Access-Control-Allow-Origin', '*');
+        res.set('Cache-Control', 'no-cache');
+        
+        let data = '';
+        response.on('data', (chunk) => {
+            data += chunk;
+        });
+        
+        response.on('end', () => {
+            // Modify the m3u8 content to point to our proxy
+            const modifiedData = data.replace(/ph250720_(\d+)\.ts/g, '/proxy-stream/ph250720_$1.ts');
+            res.send(modifiedData);
+        });
+    }).on('error', (error) => {
+        res.status(500).json({
+            error: 'Failed to fetch stream',
+            message: error.message,
+            url: streamUrl
+        });
+    });
+});
+
+// Direct proxy for stream segments
+app.get('/proxy-stream/:filename', (req, res) => {
+    const https = require('https');
+    const filename = req.params.filename;
+    const baseUrl = 'https://forbinaquarium.com/Live/00/ph250720/';
+    const segmentUrl = baseUrl + filename;
+    
+    https.get(segmentUrl, (response) => {
+        res.set('Content-Type', 'video/mp2t');
+        res.set('Access-Control-Allow-Origin', '*');
+        res.set('Cache-Control', 'no-cache');
+        
+        response.pipe(res);
+    }).on('error', (error) => {
+        res.status(404).json({
+            error: 'Segment not found',
+            message: error.message,
+            url: segmentUrl
+        });
+    });
 });
 
 // Debug endpoint to check date calculations

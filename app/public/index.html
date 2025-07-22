@@ -667,6 +667,14 @@
             }
         }
 
+        function testDirectStream() {
+            if (player) {
+                player.src('/api/test-stream');
+                player.load();
+                console.log('Testing direct stream proxy...');
+            }
+        }
+
         function toggleFullscreen() {
             if (player) {
                 if (player.isFullscreen()) {
