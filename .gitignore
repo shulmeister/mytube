@@ -1,0 +1,17 @@
+# Private configuration files (contain sensitive stream source URLs)
+PRIVATE_CONFIG.md
+*.private.md
+
+# Environment files
+.env
+.env.*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
