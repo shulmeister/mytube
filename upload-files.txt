@@ -1,0 +1,18 @@
+# MyTube File Upload Commands
+# Run these from your Windows machine (c:\MyTube directory)
+
+# Upload core files
+scp package.json root@143.198.144.51:/var/www/mytube/
+scp server.js root@143.198.144.51:/var/www/mytube/
+scp ffmpeg-simple.sh root@143.198.144.51:/var/www/mytube/
+scp setup-droplet.sh root@143.198.144.51:/var/www/mytube/
+scp start-mytube.sh root@143.198.144.51:/var/www/mytube/
+
+# Upload HTML files
+scp public/index.html root@143.198.144.51:/var/www/mytube/public/
+scp public/index_fixed.html root@143.198.144.51:/var/www/mytube/public/
+scp public/live.html root@143.198.144.51:/var/www/mytube/public/
+scp public/test.html root@143.198.144.51:/var/www/mytube/public/
+scp public/video-test.html root@143.198.144.51:/var/www/mytube/public/
+
+echo "✅ All files uploaded!"

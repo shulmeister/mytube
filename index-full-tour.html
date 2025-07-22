@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎸 MyTube - Phish Live Stream</title>
+    <link href="https://vjs.zencdn.net/8.12.0/video-js.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #ff6b6b;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+        .video-container {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .video-js {
+            width: 100%;
+            height: 400px;
+        }
+        @media (min-width: 768px) {
+            .video-js {
+                height: 500px;
+            }
+        }
+        @media (min-width: 1024px) {
+            .video-js {
+                height: 600px;
+            }
+        }
+        .show-selector {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .show-selector h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .selector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .selector-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .selector-item label {
+            color: #888;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        select, .live-button {
+            padding: 12px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #2a2a2a;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        select:focus, .live-button:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+        select:hover, .live-button:hover {
+            border-color: #ff6b6b;
+            background: #333;
+        }
+        .live-button {
+            background: #4ecdc4;
+            border-color: #4ecdc4;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .live-button.active {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+        .btn-secondary {
+            background: #4ecdc4;
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .info-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .info-section h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .info-item {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .info-label {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .status-active {
+            color: #4ecdc4;
+        }
+        .current-show {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .show-title {
+            color: #ff6b6b;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        .show-details {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: #fff;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            z-index: 1000;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #333;
+            border-top: 4px solid #ff6b6b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .video-container {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎸 MyTube</h1>
+            <p>Phish Live Stream Portal</p>
+        </div>
+
+        <div class="video-container">
+            <div class="loading-overlay" id="loading-overlay" style="display: none;">
+                <div class="loading-spinner"></div>
+                <div id="loading-message">Loading stream... Please be patient</div>
+            </div>
+            <video-js
+                id="phish-player"
+                class="video-js vjs-default-skin"
+                controls
+                preload="auto"
+                data-setup='{"fluid": true, "responsive": true, "liveui": true}'>
+                <p class="vjs-no-js">
+                    To view this video please enable JavaScript, and consider upgrading to a web browser that
+                    <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
+                </p>
+            </video-js>
+            
+            <!-- Seek Controls Right Under Video -->
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
+                <button class="btn btn-secondary" onclick="seekBackward(300)" style="padding: 8px 16px;">⏮️ -5min</button>
+                <button class="btn btn-secondary" onclick="seekBackward()" style="padding: 8px 16px;">⏪ -30s</button>
+                <button class="btn btn-primary" onclick="loadCurrentShow()" style="padding: 8px 16px;">▶️ Reload</button>
+                <button class="btn btn-secondary" onclick="seekForward()" style="padding: 8px 16px;">⏩ +30s</button>
+                <button class="btn btn-secondary" onclick="seekForward(300)" style="padding: 8px 16px;">⏭️ +5min</button>
+            </div>
+        </div>
+
+        <div class="show-selector">
+            <h3>🎵 Select Phish Show</h3>
+            <div class="selector-grid">
+                <div class="selector-item">
+                    <label>2025 Tour Shows</label>
+                    <select id="show-select">
+                        <option value="">Select a show...</option>
+                        <optgroup label="January 2025 - Mexico">
+                            <option value="250129">Jan 29 - Moon Palace Resort (Cancún)</option>
+                            <option value="250130">Jan 30 - Moon Palace Resort (Cancún)</option>
+                            <option value="250131">Jan 31 - Moon Palace Resort (Cancún)</option>
+                            <option value="250201">Feb 1 - Moon Palace Resort (Cancún)</option>
+                        </optgroup>
+                        <optgroup label="April 2025 - Spring Tour">
+                            <option value="250418">Apr 18 - Climate Pledge Arena (Seattle)</option>
+                            <option value="250419">Apr 19 - Climate Pledge Arena (Seattle)</option>
+                            <option value="250420">Apr 20 - Moda Center (Portland)</option>
+                            <option value="250422">Apr 22 - Bill Graham Civic (San Francisco)</option>
+                            <option value="250423">Apr 23 - Bill Graham Civic (San Francisco)</option>
+                            <option value="250425">Apr 25 - Hollywood Bowl (Los Angeles)</option>
+                            <option value="250426">Apr 26 - Hollywood Bowl (Los Angeles)</option>
+                            <option value="250427">Apr 27 - Hollywood Bowl (Los Angeles)</option>
+                        </optgroup>
+                        <optgroup label="June 2025 - Summer Tour">
+                            <option value="250620">Jun 20 - SNHU Arena (Manchester)</option>
+                            <option value="250621">Jun 21 - SNHU Arena (Manchester)</option>
+                            <option value="250622">Jun 22 - SNHU Arena (Manchester)</option>
+                            <option value="250624">Jun 24 - Petersen Events Center (Pittsburgh)</option>
+                            <option value="250627">Jun 27 - Moody Center (Austin)</option>
+                            <option value="250628">Jun 28 - Moody Center (Austin)</option>
+                        </optgroup>
+                        <optgroup label="July 2025 - Summer Tour">
+                            <option value="250703">Jul 3 - Folsom Field (Boulder)</option>
+                            <option value="250704">Jul 4 - Folsom Field (Boulder)</option>
+                            <option value="250705">Jul 5 - Folsom Field (Boulder)</option>
+                            <option value="250709">Jul 9 - Schottenstein Center (Columbus)</option>
+                            <option value="250711">Jul 11 - North Charleston Coliseum</option>
+                            <option value="250712">Jul 12 - North Charleston Coliseum</option>
+                            <option value="250713">Jul 13 - North Charleston Coliseum</option>
+                            <option value="250715">Jul 15 - Mann Center (Philadelphia)</option>
+                            <option value="250716">Jul 16 - Mann Center (Philadelphia)</option>
+                            <option value="250718">Jul 18 - United Center (Chicago)</option>
+                            <option value="250719">Jul 19 - United Center (Chicago)</option>
+                            <option value="250720" selected>Jul 20 - United Center (Chicago) - Current</option>
+                            <option value="250722">Jul 22 - Forest Hills Stadium (Queens)</option>
+                            <option value="250723">Jul 23 - Forest Hills Stadium (Queens)</option>
+                            <option value="250725">Jul 25 - Saratoga Performing Arts Center</option>
+                            <option value="250726">Jul 26 - Saratoga Performing Arts Center</option>
+                            <option value="250727">Jul 27 - Saratoga Performing Arts Center</option>
+                        </optgroup>
+                        <optgroup label="September 2025 - Fall Tour">
+                            <option value="250912">Sep 12 - Bourbon & Beyond Festival (Louisville)</option>
+                            <option value="250913">Sep 13 - Coca‑Cola Amphitheater (Birmingham)</option>
+                            <option value="250914">Sep 14 - Coca‑Cola Amphitheater (Birmingham)</option>
+                            <option value="250916">Sep 16 - Ameris Bank Amphitheatre (Alpharetta)</option>
+                            <option value="250917">Sep 17 - Ameris Bank Amphitheatre (Alpharetta)</option>
+                            <option value="250919">Sep 19 - Hampton Coliseum (Hampton)</option>
+                            <option value="250920">Sep 20 - Hampton Coliseum (Hampton)</option>
+                            <option value="250921">Sep 21 - Hampton Coliseum (Hampton)</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="selector-item">
+                    <label>Live Stream</label>
+                    <button class="live-button" id="live-button" onclick="switchToLive()">
+                        🔴 Go Live
+                    </button>
+                </div>
+            </div>
+            <div class="current-show" id="current-show">
+                <div class="show-title">Currently Playing: July 20, 2025</div>
+                <div class="show-details">United Center (Chicago) - High Quality Stream</div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3>📺 Stream Information</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Stream Status</div>
+                    <div class="info-value status-active" id="stream-status">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Last Updated</div>
+                    <div class="info-value" id="last-updated">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Stream URL</div>
+                    <div class="info-value" id="stream-url">http://143.198.144.51:3000/stream/output.m3u8</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://vjs.zencdn.net/8.12.0/video.min.js"></script>
+    <script>
+        let player;
+        let currentShow = '250720';
+        let isLive = false;
+
+        // Complete 2025 Phish Tour - hardcoded mapping
+        const shows = {
+            '250129': { title: 'January 29, 2025', venue: 'Moon Palace Resort (Cancún, Mexico)', available: true },
+            '250130': { title: 'January 30, 2025', venue: 'Moon Palace Resort (Cancún, Mexico)', available: true },
+            '250131': { title: 'January 31, 2025', venue: 'Moon Palace Resort (Cancún, Mexico)', available: true },
+            '250201': { title: 'February 1, 2025', venue: 'Moon Palace Resort (Cancún, Mexico)', available: true },
+            '250418': { title: 'April 18, 2025', venue: 'Climate Pledge Arena (Seattle, WA)', available: true },
+            '250419': { title: 'April 19, 2025', venue: 'Climate Pledge Arena (Seattle, WA)', available: true },
+            '250420': { title: 'April 20, 2025', venue: 'Moda Center (Portland, OR)', available: true },
+            '250422': { title: 'April 22, 2025', venue: 'Bill Graham Civic Auditorium (San Francisco, CA)', available: true },
+            '250423': { title: 'April 23, 2025', venue: 'Bill Graham Civic Auditorium (San Francisco, CA)', available: true },
+            '250425': { title: 'April 25, 2025', venue: 'Hollywood Bowl (Los Angeles, CA)', available: true },
+            '250426': { title: 'April 26, 2025', venue: 'Hollywood Bowl (Los Angeles, CA)', available: true },
+            '250427': { title: 'April 27, 2025', venue: 'Hollywood Bowl (Los Angeles, CA)', available: true },
+            '250620': { title: 'June 20, 2025', venue: 'SNHU Arena (Manchester, NH)', available: true },
+            '250621': { title: 'June 21, 2025', venue: 'SNHU Arena (Manchester, NH)', available: true },
+            '250622': { title: 'June 22, 2025', venue: 'SNHU Arena (Manchester, NH)', available: true },
+            '250624': { title: 'June 24, 2025', venue: 'Petersen Events Center (Pittsburgh, PA)', available: true },
+            '250627': { title: 'June 27, 2025', venue: 'Moody Center (Austin, TX)', available: true },
+            '250628': { title: 'June 28, 2025', venue: 'Moody Center (Austin, TX)', available: true },
+            '250703': { title: 'July 3, 2025', venue: 'Folsom Field (Boulder, CO)', available: true },
+            '250704': { title: 'July 4, 2025', venue: 'Folsom Field (Boulder, CO)', available: true },
+            '250705': { title: 'July 5, 2025', venue: 'Folsom Field (Boulder, CO)', available: true },
+            '250709': { title: 'July 9, 2025', venue: 'Schottenstein Center (Columbus, OH)', available: true },
+            '250711': { title: 'July 11, 2025', venue: 'North Charleston Coliseum (North Charleston, SC)', available: true },
+            '250712': { title: 'July 12, 2025', venue: 'North Charleston Coliseum (North Charleston, SC)', available: true },
+            '250713': { title: 'July 13, 2025', venue: 'North Charleston Coliseum (North Charleston, SC)', available: true },
+            '250715': { title: 'July 15, 2025', venue: 'Mann Center (Philadelphia, PA)', available: true },
+            '250716': { title: 'July 16, 2025', venue: 'Mann Center (Philadelphia, PA)', available: true },
+            '250718': { title: 'July 18, 2025', venue: 'United Center (Chicago, IL)', available: true },
+            '250719': { title: 'July 19, 2025', venue: 'United Center (Chicago, IL)', available: true },
+            '250720': { title: 'July 20, 2025', venue: 'United Center (Chicago, IL)', available: true },
+            '250722': { title: 'July 22, 2025', venue: 'Forest Hills Stadium (Queens, NY)', available: true },
+            '250723': { title: 'July 23, 2025', venue: 'Forest Hills Stadium (Queens, NY)', available: true },
+            '250725': { title: 'July 25, 2025', venue: 'Saratoga Performing Arts Center (Saratoga Springs, NY)', available: true },
+            '250726': { title: 'July 26, 2025', venue: 'Saratoga Performing Arts Center (Saratoga Springs, NY)', available: true },
+            '250727': { title: 'July 27, 2025', venue: 'Saratoga Performing Arts Center (Saratoga Springs, NY)', available: true },
+            '250912': { title: 'September 12, 2025', venue: 'Bourbon & Beyond Festival (Louisville, KY)', available: true },
+            '250913': { title: 'September 13, 2025', venue: 'Coca‑Cola Amphitheater (Birmingham, AL)', available: true },
+            '250914': { title: 'September 14, 2025', venue: 'Coca‑Cola Amphitheater (Birmingham, AL)', available: true },
+            '250916': { title: 'September 16, 2025', venue: 'Ameris Bank Amphitheatre (Alpharetta, GA)', available: true },
+            '250917': { title: 'September 17, 2025', venue: 'Ameris Bank Amphitheatre (Alpharetta, GA)', available: true },
+            '250919': { title: 'September 19, 2025', venue: 'Hampton Coliseum (Hampton, VA)', available: true },
+            '250920': { title: 'September 20, 2025', venue: 'Hampton Coliseum (Hampton, VA)', available: true },
+            '250921': { title: 'September 21, 2025', venue: 'Hampton Coliseum (Hampton, VA)', available: true }
+        };
+
+        function showLoading(message) {
+            const overlay = document.getElementById('loading-overlay');
+            const messageEl = document.getElementById('loading-message');
+            messageEl.textContent = message || 'Loading stream... Please be patient';
+            overlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        function initializePlayer() {
+            if (player) {
+                player.dispose();
+            }
+            
+            player = videojs('phish-player', {
+                controls: true,
+                fluid: true,
+                responsive: true,
+                liveui: false,  // Allow seeking on recorded shows
+                autoplay: 'muted',
+                html5: {
+                    vhs: {
+                        overrideNative: true
+                    },
+                    nativeVideoTracks: false,
+                    nativeAudioTracks: false,
+                    nativeTextTracks: false
+                }
+            });
+
+            player.ready(function() {
+                console.log('Player is ready');
+                loadCurrentShow();
+            });
+
+            // Handle loading states
+            player.on('loadstart', function() {
+                showLoading('Loading new stream...');
+            });
+
+            player.on('canplay', function() {
+                hideLoading();
+                // Auto-unmute after successful load
+                if (player.muted()) {
+                    player.muted(false);
+                }
+            });
+
+            player.on('error', function() {
+                hideLoading();
+                console.error('Player error occurred');
+            });
+        }
+
+        function loadCurrentShow() {
+            // Get current show info from server
+            fetch('/api/current-show')
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(showInfo) {
+                    console.log('Current show:', showInfo);
+                    currentShow = showInfo.showId;
+                    updateCurrentShowDisplay();
+                    loadStream();
+                })
+                .catch(function(error) {
+                    console.error('Failed to get current show:', error);
+                    loadStream(); // Fallback to default stream
+                });
+        }
+
+        function loadStream() {
+            const streamUrl = '/stream/output.m3u8';
+            console.log('Loading stream at URL:', streamUrl);
+            
+            if (player) {
+                showLoading('Connecting to stream...');
+                
+                // Stop current playback cleanly
+                player.pause();
+                
+                // Set new source
+                player.src({
+                    src: streamUrl,
+                    type: 'application/x-mpegURL'
+                });
+                
+                // Load and play
+                player.load();
+                
+                setTimeout(function() {
+                    player.play().then(function() {
+                        console.log('Stream started successfully');
+                    }).catch(function(e) {
+                        console.log('Autoplay prevented, user interaction required');
+                        hideLoading();
+                    });
+                }, 2000);
+            }
+        }
+
+        function switchToShow(showId) {
+            console.log('Switching to show ID:', showId);
+            
+            // Show loading immediately
+            showLoading('Switching to new show... Please wait');
+            
+            // Stop current stream cleanly
+            if (player) {
+                player.pause();
+            }
+            
+            // Call the API to switch streams
+            fetch('/api/switch-show', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ showDate: showId })
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.error) {
+                    hideLoading();
+                    alert('Error switching show: ' + data.message);
+                    return;
+                }
+                
+                console.log('Show switched successfully:', data.message);
+                
+                currentShow = showId;
+                isLive = false;
+                
+                updateCurrentShowDisplay();
+                updateLiveButton();
+                
+                // Show progress message
+                showLoading('Stream switching... Starting in 7 seconds');
+                
+                // Wait longer for stream to restart, then reload player
+                setTimeout(function() {
+                    showLoading('Loading new stream...');
+                    loadStream();
+                }, 7000);
+                
+                // Show success message
+                const showInfo = shows[showId];
+                if (showInfo) {
+                    console.log('Switched to: ' + showInfo.title + ' - ' + showInfo.venue);
+                }
+            })
+            .catch(function(error) {
+                console.error('Error switching show:', error);
+                hideLoading();
+                alert('Failed to switch show. Please try again.');
+            });
+        }
+
+        function seekForward(seconds) {
+            seconds = seconds || 30;
+            if (player && player.duration() > 0) {
+                const currentTime = player.currentTime();
+                const newTime = Math.min(currentTime + seconds, player.duration());
+                player.currentTime(newTime);
+                console.log('Seeking forward ' + seconds + 's to ' + newTime);
+            }
+        }
+
+        function seekBackward(seconds) {
+            seconds = seconds || 30;
+            if (player && player.duration() > 0) {
+                const currentTime = player.currentTime();
+                const newTime = Math.max(currentTime - seconds, 0);
+                player.currentTime(newTime);
+                console.log('Seeking backward ' + seconds + 's to ' + newTime);
+            }
+        }
+
+        function switchToLive() {
+            isLive = !isLive;
+            
+            if (isLive) {
+                // Switch to live stream (most recent available)
+                currentShow = 'live';
+                updateCurrentShowDisplay();
+            } else {
+                // Go back to selected show
+                currentShow = document.getElementById('show-select').value || '250720';
+                updateCurrentShowDisplay();
+            }
+            
+            updateLiveButton();
+            showLoading('Switching to live mode...');
+            setTimeout(function() {
+                loadStream();
+            }, 1000);
+        }
+
+        function updateCurrentShowDisplay() {
+            const currentShowEl = document.getElementById('current-show');
+            
+            if (isLive) {
+                currentShowEl.innerHTML = '<div class="show-title">🔴 LIVE: Auto-Updating Stream</div><div class="show-details">Automatically switches to newest available show</div>';
+            } else if (shows[currentShow]) {
+                currentShowEl.innerHTML = '<div class="show-title">Currently Playing: ' + shows[currentShow].title + '</div><div class="show-details">' + shows[currentShow].venue + '</div>';
+            }
+        }
+
+        function updateLiveButton() {
+            const liveButton = document.getElementById('live-button');
+            
+            if (isLive) {
+                liveButton.classList.add('active');
+                liveButton.innerHTML = '🔴 LIVE MODE';
+            } else {
+                liveButton.classList.remove('active');
+                liveButton.innerHTML = '🔴 Go Live';
+            }
+        }
+
+        function reloadPlayer() {
+            console.log('Reloading player...');
+            showLoading('Reloading player...');
+            setTimeout(function() {
+                initializePlayer();
+            }, 1000);
+        }
+
+        function updateStatus() {
+            fetch('/api/status')
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    document.getElementById('stream-status').textContent = 
+                        data.stream_exists ? 'Active' : 'Inactive';
+                    document.getElementById('last-updated').textContent = 
+                        new Date(data.last_modified).toLocaleString();
+                })
+                .catch(function(error) {
+                    console.log('Status check failed:', error);
+                    document.getElementById('stream-status').textContent = 'Unknown';
+                    document.getElementById('last-updated').textContent = 'Unknown';
+                });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePlayer();
+            updateStatus();
+            
+            // Set up show selector
+            document.getElementById('show-select').addEventListener('change', function() {
+                if (this.value) {
+                    switchToShow(this.value);
+                }
+            });
+            
+            // Update status every 30 seconds
+            setInterval(updateStatus, 30000);
+        });
+    </script>
+</body>
+</html>

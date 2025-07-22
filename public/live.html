@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎸 Shulmeister's Phish Stream</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            color: #fff;
+            text-align: center;
+            padding: 2rem;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px #ff6b6b;
+        }
+        .welcome {
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+        .enter-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ff5252);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.3rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+        }
+        .enter-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 107, 107, 0.4);
+        }
+        .info {
+            margin-top: 3rem;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+        .url-display {
+            background: #333;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 2rem auto;
+            max-width: 400px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: #ff6b6b;
+            border: 2px solid #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">🎸 MyTube</div>
+    <div class="welcome">Welcome to Shulmeister's<br>Phish Live Stream</div>
+    
+    <a href="/index.html" class="enter-btn">🔴 Watch Live Stream</a>
+    
+    <div class="url-display">
+        Share this easy URL:<br>
+        <strong>73.229.233.153:3000/live</strong>
+    </div>
+    
+    <div class="info">
+        <p>🎵 Forest Hills Stadium • July 22-23, 2025</p>
+        <p>📱 Works on phones, tablets, computers, and smart TVs</p>
+        <p>🔊 Audio starts automatically - adjust volume as needed</p>
+        <p>⌨️ Use spacebar, arrow keys, or J/K/L for playback control</p>
+    </div>
+    
+    <script>
+        // Auto-redirect after 3 seconds if someone just lands here
+        setTimeout(() => {
+            if (!document.hidden) {
+                // Only redirect if user hasn't interacted
+                window.location.href = '/index.html';
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

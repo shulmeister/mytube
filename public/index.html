@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: *; connect-src 'self' *; media-src 'self' *;">
+    <title>Shulmeister's MyTube - Phish Live Stream</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #212121;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: #f44336;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .video-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .video-player {
+            width: 100%;
+            height: 400px;
+            background: #000;
+        }
+
+        @media (min-width: 768px) {
+            .video-player {
+                height: 500px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .video-player {
+                height: 600px;
+            }
+        }
+
+        .controls-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .controls-section h3 {
+            margin-bottom: 1rem;
+            color: #ff6b6b;
+        }
+
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .playback-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .playback-btn {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .playback-btn:hover {
+            background: #ff6b6b;
+            transform: translateY(-2px);
+        }
+
+        .playback-btn:active {
+            transform: translateY(0);
+        }
+
+        .btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #ff5252;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .date-selector {
+            margin-bottom: 1rem;
+        }
+
+        .date-selector select {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            min-width: 200px;
+        }
+
+        .stream-info {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stream-info h3 {
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .info-item {
+            background: #333;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-value {
+            font-weight: bold;
+            word-break: break-all;
+        }
+
+        .logs-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .logs-section h3 {
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+        }
+
+        .logs-container {
+            background: #000;
+            border-radius: 6px;
+            padding: 1rem;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            border-top: 1px solid #333;
+            margin-top: 2rem;
+        }
+
+        .footer a {
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .video-error {
+            display: none;
+            background: #333;
+            color: #ff6b6b;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 8px;
+            margin: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">🎸 Shulmeister's MyTube</div>
+        <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Connecting...</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="video-section">
+            <video 
+                id="streamVideo" 
+                class="video-player" 
+                controls 
+                preload="none">
+                <p>Your browser does not support the video tag or HLS streaming.</p>
+            </video>
+            
+            <!-- Playback Controls -->
+            <div class="playback-controls">
+                <button class="playback-btn" onclick="rewind(30)">⏪ 30s</button>
+                <button class="playback-btn" onclick="rewind(10)">⏪ 10s</button>
+                <button class="playback-btn" onclick="togglePlayPause()">⏯️ Play/Pause</button>
+                <button class="playback-btn" onclick="fastForward(10)">10s ⏩</button>
+                <button class="playback-btn" onclick="fastForward(30)">30s ⏩</button>
+            </div>
+            
+            <div style="text-align: center; color: #666; font-size: 0.8rem; margin: 0.5rem 0;">
+                💡 <strong>Keyboard shortcuts:</strong> Spacebar (play/pause), ← → arrows (10s), J/K/L (YouTube style)
+            </div>
+            
+            <div id="videoError" class="video-error">
+                <h3>⚠️ Stream Error</h3>
+                <p id="errorMessage">Unable to load the stream. Click "Test Stream" to diagnose the issue.</p>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <h3>🎸 Select Phish Show</h3>
+            
+            <div class="date-selector">
+                <select id="dateSelect" onchange="changeShow()">
+                    <option value="">Loading shows...</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn" onclick="testStream()">🔧 Test Stream</button>
+                <button class="btn" onclick="reloadStream()">🔄 Reload Stream</button>
+                <button class="btn" onclick="playStream()">▶️ Play Stream</button>
+                <button class="btn" onclick="clearErrors()">✨ Clear Errors</button>
+            </div>
+        </div>
+
+        <div class="stream-info">
+            <h3>📊 Stream Information</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Stream Status</div>
+                    <div class="info-value" id="streamStatus">Checking...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Last Updated</div>
+                    <div class="info-value" id="lastUpdated">--</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Stream URL</div>
+                    <div class="info-value" id="streamUrl">http://143.198.144.51:3000/stream/output.m3u8</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Current Time (MT)</div>
+                    <div class="info-value" id="currentTime">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="logs-section">
+            <h3>📝 Stream Logs</h3>
+            <div class="logs-container" id="logsContainer">
+                Loading logs...
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>🎸 Built for Phish fans by Phish fans ✨</p>
+        <p><a href="https://phish.com" target="_blank">Official Phish Website</a> | 
+           <a href="https://github.com/shulmeister/mytube" target="_blank">GitHub</a></p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        let video;
+        let hls;
+        let statusInterval;
+
+        // Initialize video player
+        function initVideo() {
+            video = document.getElementById('streamVideo');
+            const streamUrl = '/stream/output.m3u8?t=' + Date.now();
+            
+            console.log('Initializing video with stream URL:', streamUrl);
+            
+            // Hide error message
+            document.getElementById('videoError').style.display = 'none';
+            
+            if (Hls.isSupported()) {
+                console.log('Using HLS.js for playback');
+                hls = new Hls({
+                    debug: false,
+                    enableWorker: true,
+                    lowLatencyMode: true
+                });
+                
+                hls.loadSource(streamUrl);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    console.log('HLS manifest parsed successfully');
+                    updateStatus('🔴 Stream Ready', true);
+                });
+                
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    console.error('HLS error:', data);
+                    
+                    // Handle different types of errors
+                    if (data.fatal) {
+                        switch(data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.log('Network error, trying to recover...');
+                                showVideoError('Network error - trying to reconnect...');
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.log('Media error, trying to recover...');
+                                showVideoError('Media error - trying to recover...');
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                console.log('Fatal error, destroying and recreating...');
+                                showVideoError(`Fatal error: ${data.details}`);
+                                hls.destroy();
+                                setTimeout(() => {
+                                    initVideo();
+                                }, 3000);
+                                break;
+                        }
+                    } else {
+                        // Non-fatal errors, just log them
+                        console.log('Non-fatal HLS error:', data.details);
+                        if (data.details.includes('bufferStalled')) {
+                            updateStatus('⏳ Stream Buffering...', true);
+                            // Hide error for buffer stalls as they're usually temporary
+                            document.getElementById('videoError').style.display = 'none';
+                        }
+                    }
+                });
+                
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                console.log('Using native HLS support');
+                video.src = streamUrl;
+                updateStatus('🔴 Stream Ready', true);
+            } else {
+                console.error('HLS not supported');
+                showVideoError('HLS streaming is not supported in this browser');
+                updateStatus('❌ Browser Not Supported', false);
+                return;
+            }
+            
+            // Video event listeners
+            video.addEventListener('loadstart', () => {
+                console.log('Video load started');
+                updateStatus('🔄 Loading Stream...', true);
+            });
+            
+            video.addEventListener('canplay', () => {
+                console.log('Video can play');
+                updateStatus('🔴 Stream Ready', true);
+            });
+            
+            video.addEventListener('playing', () => {
+                console.log('Video is playing');
+                updateStatus('🔴 Live Stream Playing', true);
+            });
+            
+            video.addEventListener('waiting', () => {
+                console.log('Video buffering');
+                updateStatus('⏳ Buffering...', true);
+            });
+            
+            video.addEventListener('error', (e) => {
+                console.error('Video error:', e);
+                showVideoError('Video playback error');
+                updateStatus('❌ Playback Error', false);
+            });
+        }
+
+        // Show video error
+        function showVideoError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('videoError').style.display = 'block';
+        }
+
+        // Update status indicator
+        function updateStatus(text, isOnline) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            statusText.textContent = text;
+            statusDot.className = `status-dot ${isOnline ? '' : 'offline'}`;
+        }
+
+        // Playback Controls
+        function rewind(seconds) {
+            if (video) {
+                video.currentTime = Math.max(0, video.currentTime - seconds);
+                console.log(`Rewound ${seconds} seconds to ${video.currentTime.toFixed(1)}s`);
+            }
+        }
+
+        function fastForward(seconds) {
+            if (video) {
+                video.currentTime = Math.min(video.duration || video.currentTime + seconds, video.currentTime + seconds);
+                console.log(`Fast forwarded ${seconds} seconds to ${video.currentTime.toFixed(1)}s`);
+            }
+        }
+
+        function togglePlayPause() {
+            if (video) {
+                if (video.paused) {
+                    video.play();
+                    console.log('Video resumed');
+                } else {
+                    video.pause();
+                    console.log('Video paused');
+                }
+            }
+        }
+
+        // Test stream function
+        function testStream() {
+            console.log('Testing stream...');
+            updateStatus('🔧 Testing Stream...', true);
+            
+            const streamUrl = '/stream/output.m3u8?t=' + Date.now();
+            console.log('Testing stream URL:', streamUrl);
+            
+            fetch(streamUrl)
+                .then(response => {
+                    console.log('Stream URL response:', response.status, response.statusText);
+                    if (response.ok) {
+                        return response.text();
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                })
+                .then(m3u8Content => {
+                    console.log('Stream playlist content:', m3u8Content.substring(0, 500));
+                    updateStatus('✅ Stream URL Accessible', true);
+                    
+                    // Try to reload the video
+                    initVideo();
+                })
+                .catch(error => {
+                    console.error('Stream URL test failed:', error);
+                    showVideoError(`Stream not accessible: ${error.message}`);
+                    updateStatus('❌ Stream URL Not Accessible', false);
+                });
+        }
+
+        // Reload stream
+        function reloadStream() {
+            console.log('Reloading stream...');
+            updateStatus('🔄 Reloading Stream...', true);
+            
+            if (hls) {
+                hls.destroy();
+            }
+            
+            initVideo();
+        }
+
+        // Play stream
+        function playStream() {
+            console.log('Attempting to play stream...');
+            if (video) {
+                video.play().then(() => {
+                    console.log('Stream playing successfully');
+                    updateStatus('🔴 Live Stream Playing', true);
+                }).catch(error => {
+                    console.error('Play failed:', error);
+                    updateStatus('❌ Play Failed', false);
+                });
+            }
+        }
+
+        // Clear errors
+        function clearErrors() {
+            console.log('Clearing errors...');
+            document.getElementById('videoError').style.display = 'none';
+            updateStatus('🔴 Errors Cleared', true);
+        }
+
+        // Check stream status
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                if (data.stream_exists) {
+                    document.getElementById('streamStatus').textContent = '✅ Active';
+                    document.getElementById('lastUpdated').textContent = 
+                        new Date(data.last_modified).toLocaleString();
+                } else {
+                    document.getElementById('streamStatus').textContent = '❌ Offline';
+                }
+            } catch (error) {
+                console.error('Status check failed:', error);
+                document.getElementById('streamStatus').textContent = '⚠️ Error';
+            }
+        }
+
+        // Load stream logs
+        async function loadLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                const data = await response.json();
+                const logsContainer = document.getElementById('logsContainer');
+                
+                logsContainer.innerHTML = data.logs.join('\n') || 'No logs available';
+                logsContainer.scrollTop = logsContainer.scrollHeight;
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+                document.getElementById('logsContainer').textContent = 'Failed to load logs';
+            }
+        }
+
+        // Load available dates
+        async function loadDates() {
+            try {
+                const response = await fetch('/api/dates');
+                const dates = await response.json();
+                const select = document.getElementById('dateSelect');
+                
+                select.innerHTML = '';
+                
+                // Add LIVE/AUTO option first
+                const liveOption = document.createElement('option');
+                liveOption.value = 'LIVE';
+                liveOption.textContent = '🔴 LIVE/AUTO - Best Available Stream';
+                liveOption.selected = true;  // Default to LIVE
+                select.appendChild(liveOption);
+                
+                // Add separator
+                const separatorOption = document.createElement('option');
+                separatorOption.value = '';
+                separatorOption.textContent = '--- Select Specific Show ---';
+                separatorOption.disabled = true;
+                select.appendChild(separatorOption);
+                
+                let mostRecentShow = 'LIVE';
+                dates.forEach(date => {
+                    const option = document.createElement('option');
+                    option.value = date.date;
+                    option.textContent = `${date.formatted} ${date.isKnownShow ? '🎸' : ''}`;
+                    select.appendChild(option);
+                });
+                
+                console.log(`Stream selector loaded with LIVE option and ${dates.length} specific shows`);
+            } catch (error) {
+                console.error('Failed to load dates:', error);
+                document.getElementById('dateSelect').innerHTML = 
+                    '<option value="LIVE">🔴 LIVE/AUTO - Best Available Stream</option>' +
+                    '<option value="">Failed to load shows</option>';
+            }
+        }
+
+        // Change show
+        async function changeShow() {
+            const select = document.getElementById('dateSelect');
+            const showDate = select.value;
+            
+            if (!showDate) return;
+            
+            console.log(`User selected: ${showDate}`);
+            
+            if (showDate === 'LIVE') {
+                updateStatus('🔄 Finding Best Live Stream...', true);
+                console.log('User selected LIVE/AUTO mode');
+            } else {
+                updateStatus(`🔄 Switching to ${showDate}...`, true);
+                console.log(`User selected specific show date: ${showDate}`);
+            }
+            
+            // Hide any existing errors
+            document.getElementById('videoError').style.display = 'none';
+            
+            try {
+                const requestBody = showDate === 'LIVE' ? {} : { date: showDate };
+                const response = await fetch('/api/stream/restart', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log(`Stream restart response:`, result);
+                    
+                    if (showDate === 'LIVE') {
+                        updateStatus(`🔄 Loading Best Available Stream...`, true);
+                    } else {
+                        updateStatus(`🔄 Loading ${showDate} Show...`, true);
+                    }
+                    
+                    // Wait longer for FFmpeg to restart and stabilize
+                    setTimeout(() => {
+                        console.log('Reloading stream after show change...');
+                        if (hls) {
+                            hls.destroy();
+                        }
+                        // Force a longer delay to ensure FFmpeg has time to restart
+                        setTimeout(() => {
+                            initVideo();
+                            if (showDate === 'LIVE') {
+                                updateStatus(`🔴 LIVE - Best Available Stream`, true);
+                            } else {
+                                updateStatus(`🔴 Playing ${showDate} Show`, true);
+                            }
+                        }, 2000);
+                    }, 5000);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+            } catch (error) {
+                console.error('Failed to change show:', error);
+                if (showDate === 'LIVE') {
+                    showVideoError(`Failed to find live stream: ${error.message}`);
+                    updateStatus('⚠️ Error Finding Live Stream', false);
+                } else {
+                    showVideoError(`Failed to switch to ${showDate}: ${error.message}`);
+                    updateStatus('⚠️ Error Loading Show', false);
+                }
+            }
+        }
+
+        // Update current time
+        function updateCurrentTime() {
+            const now = new Date();
+            const mtTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Denver"}));
+            document.getElementById('currentTime').textContent = mtTime.toLocaleString();
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            initVideo();
+            checkStatus();
+            loadLogs();
+            loadDates();
+            updateCurrentTime();
+            
+            statusInterval = setInterval(() => {
+                checkStatus();
+                loadLogs();
+                updateCurrentTime();
+            }, 10000);
+            
+            // Add keyboard shortcuts for playback
+            document.addEventListener('keydown', (e) => {
+                // Only if we're not typing in an input/textarea
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                
+                switch(e.key) {
+                    case ' ':  // Spacebar - play/pause
+                        e.preventDefault();
+                        togglePlayPause();
+                        break;
+                    case 'ArrowLeft':  // Left arrow - rewind 10s
+                        e.preventDefault();
+                        rewind(10);
+                        break;
+                    case 'ArrowRight':  // Right arrow - fast forward 10s
+                        e.preventDefault();
+                        fastForward(10);
+                        break;
+                    case 'j':  // J - rewind 10s (YouTube style)
+                        rewind(10);
+                        break;
+                    case 'l':  // L - fast forward 10s (YouTube style)
+                        fastForward(10);
+                        break;
+                    case 'k':  // K - play/pause (YouTube style)
+                        togglePlayPause();
+                        break;
+                }
+            });
+        });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+            if (hls) {
+                hls.destroy();
+            }
+        });
+    </script>
+</body>
+</html>

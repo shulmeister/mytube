@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head><title>VIDEO TEST</title></head>
+<body style="background: red; color: white; font-size: 24px; padding: 20px;">
+<h1>🎸 VIDEO ELEMENT TEST</h1>
+<p>The red background should stay visible throughout this test.</p>
+
+<div style="border: 5px solid yellow; padding: 20px; margin: 20px;">
+    <h2>BEFORE VIDEO</h2>
+    <p>This yellow box should always be visible</p>
+</div>
+
+<div style="border: 5px solid blue; padding: 20px; margin: 20px;">
+    <h2>VIDEO CONTAINER</h2>
+    <video id="testVideo" controls style="width: 400px; height: 300px; background: green; border: 3px solid white;">
+        <source src="/stream/output.m3u8" type="application/x-mpegURL">
+        <source src="/test.m3u8" type="application/x-mpegURL">
+        Your browser does not support video.
+    </video>
+    <p>Video element above ↑</p>
+</div>
+
+<div style="border: 5px solid yellow; padding: 20px; margin: 20px;">
+    <h2>AFTER VIDEO</h2>
+    <p>This yellow box should also always be visible</p>
+    <button onclick="checkVideo()" style="font-size: 18px; padding: 10px;">Check Video Status</button>
+</div>
+
+<div id="status" style="background: black; color: lime; padding: 20px; margin: 20px; font-family: monospace;">
+Status will appear here...
+</div>
+
+<script>
+function checkVideo() {
+    const video = document.getElementById('testVideo');
+    const status = document.getElementById('status');
+    
+    let info = 'VIDEO STATUS:\n';
+    info += 'Exists: ' + (video ? 'YES' : 'NO') + '\n';
+    if (video) {
+        info += 'Width: ' + video.offsetWidth + 'px\n';
+        info += 'Height: ' + video.offsetHeight + 'px\n';
+        info += 'ReadyState: ' + video.readyState + '\n';
+        info += 'NetworkState: ' + video.networkState + '\n';
+        info += 'Error: ' + (video.error ? video.error.message : 'None') + '\n';
+    }
+    
+    status.innerHTML = info.replace(/\n/g, '<br>');
+}
+
+// Check status every 2 seconds
+setInterval(checkVideo, 2000);
+
+// Initial check
+setTimeout(checkVideo, 1000);
+</script>
+</body>
+</html>

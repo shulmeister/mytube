@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎸 MyTube - Phish Live Stream</title>
+    <link href="https://vjs.zencdn.net/8.12.0/video-js.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #ff6b6b;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+        .video-container {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .video-js {
+            width: 100%;
+            height: 400px;
+        }
+        @media (min-width: 768px) {
+            .video-js {
+                height: 500px;
+            }
+        }
+        @media (min-width: 1024px) {
+            .video-js {
+                height: 600px;
+            }
+        }
+        .show-selector {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .show-selector h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .selector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .selector-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .selector-item label {
+            color: #888;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        select, .live-button {
+            padding: 12px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #2a2a2a;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        select:focus, .live-button:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+        select:hover, .live-button:hover {
+            border-color: #ff6b6b;
+            background: #333;
+        }
+        .live-button {
+            background: #4ecdc4;
+            border-color: #4ecdc4;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .live-button.active {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+        .btn-secondary {
+            background: #4ecdc4;
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .info-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .info-section h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .info-item {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .info-label {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .status-active {
+            color: #4ecdc4;
+        }
+        .current-show {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .show-title {
+            color: #ff6b6b;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        .show-details {
+            color: #888;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎸 MyTube</h1>
+            <p>Phish Live Stream Portal</p>
+        </div>
+
+        <div class="video-container">
+            <video-js
+                id="phish-player"
+                class="video-js vjs-default-skin"
+                controls
+                preload="auto"
+                data-setup='{"fluid": true, "responsive": true, "liveui": true}'>
+                <p class="vjs-no-js">
+                    To view this video please enable JavaScript, and consider upgrading to a web browser that
+                    <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
+                </p>
+            </video-js>
+        </div>
+
+        <div class="show-selector">
+            <h3>🎵 Select Phish Show</h3>
+            <div class="selector-grid">
+                <div class="selector-item">
+                    <label>Tour Shows</label>
+                    <select id="show-select">
+                        <option value="">Select a show...</option>
+                        <option value="ph250722">July 22, 2025 - Forest Hills Stadium</option>
+                        <option value="ph250720" selected>July 20, 2025 - Chicago (Current)</option>
+                        <option value="ph250719">July 19, 2025 - Previous Show</option>
+                        <option value="ph250718">July 18, 2025 - Previous Show</option>
+                        <option value="ph250716">July 16, 2025 - Previous Show</option>
+                    </select>
+                </div>
+                <div class="selector-item">
+                    <label>Live Stream</label>
+                    <button class="live-button" id="live-button" onclick="switchToLive()">
+                        🔴 Go Live
+                    </button>
+                </div>
+            </div>
+            <div class="current-show" id="current-show">
+                <div class="show-title">Currently Playing: July 20, 2025</div>
+                <div class="show-details">Chicago Show - High Quality Stream</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="loadStream()">▶️ Load Stream</button>
+            <button class="btn btn-secondary" onclick="reloadPlayer()">🔄 Reload Player</button>
+        </div>
+
+        <div class="info-section">
+            <h3>📺 Stream Information</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Stream Status</div>
+                    <div class="info-value status-active" id="stream-status">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Last Updated</div>
+                    <div class="info-value" id="last-updated">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Stream URL</div>
+                    <div class="info-value" id="stream-url">http://143.198.144.51:3000/stream/output.m3u8</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://vjs.zencdn.net/8.12.0/video.min.js"></script>
+    <script>
+        let player;
+        let currentShow = 'ph250720';
+        let isLive = false;
+
+        const shows = {
+            'ph250722': {
+                title: 'July 22, 2025 - Forest Hills Stadium',
+                details: 'Summer Tour 2025 - New York',
+                available: true
+            },
+            'ph250720': {
+                title: 'July 20, 2025 - Chicago',
+                details: 'Summer Tour 2025 - High Quality Stream',
+                available: true
+            },
+            'ph250719': {
+                title: 'July 19, 2025 - Previous Show',
+                details: 'Summer Tour 2025',
+                available: true
+            },
+            'ph250718': {
+                title: 'July 18, 2025 - Previous Show',
+                details: 'Summer Tour 2025',
+                available: true
+            },
+            'ph250716': {
+                title: 'July 16, 2025 - Previous Show',
+                details: 'Summer Tour 2025',
+                available: true
+            }
+        };
+
+        function initializePlayer() {
+            if (player) {
+                player.dispose();
+            }
+            
+            player = videojs('phish-player', {
+                controls: true,
+                fluid: true,
+                responsive: true,
+                liveui: true,
+                html5: {
+                    vhs: {
+                        overrideNative: true
+                    },
+                    nativeVideoTracks: false,
+                    nativeAudioTracks: false,
+                    nativeTextTracks: false
+                }
+            });
+
+            player.ready(() => {
+                console.log('Player is ready');
+                loadStream();
+            });
+        }
+
+        function loadStream() {
+            const streamUrl = '/stream/output.m3u8';
+            console.log('Loading stream:', streamUrl);
+            
+            if (player) {
+                player.src({
+                    src: streamUrl,
+                    type: 'application/x-mpegURL'
+                });
+                
+                player.load();
+                
+                setTimeout(() => {
+                    player.play().catch(e => {
+                        console.log('Autoplay prevented, user interaction required');
+                    });
+                }, 1000);
+            }
+        }
+
+        function switchToShow(showId) {
+            // Extract date from showId (e.g., "ph250720" -> "250720")
+            const showDate = showId.replace('ph', '');
+            
+            console.log(`Switching to show: ${showId} (${showDate})`);
+            
+            // Call the API to switch streams
+            fetch('/api/switch-show', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ showDate: showDate })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(`Error switching show: ${data.message}`);
+                    return;
+                }
+                
+                console.log('Show switched successfully:', data.message);
+                
+                currentShow = showId;
+                isLive = false;
+                
+                updateCurrentShowDisplay();
+                updateLiveButton();
+                
+                // Wait a moment for the stream to restart, then reload player
+                setTimeout(() => {
+                    loadStream();
+                }, 5000);
+                
+                // Show success message
+                alert(`Switched to ${shows[showId]?.title || showId}! Stream will reload in a moment.`);
+            })
+            .catch(error => {
+                console.error('Error switching show:', error);
+                alert('Failed to switch show. Please try again.');
+            });
+        }
+
+        function switchToLive() {
+            isLive = !isLive;
+            
+            if (isLive) {
+                // Switch to live stream (most recent available)
+                currentShow = 'live';
+                updateCurrentShowDisplay();
+            } else {
+                // Go back to selected show
+                currentShow = document.getElementById('show-select').value || 'ph250720';
+                updateCurrentShowDisplay();
+            }
+            
+            updateLiveButton();
+            loadStream();
+        }
+
+        function updateCurrentShowDisplay() {
+            const currentShowEl = document.getElementById('current-show');
+            
+            if (isLive) {
+                currentShowEl.innerHTML = `
+                    <div class="show-title">🔴 LIVE: Auto-Updating Stream</div>
+                    <div class="show-details">Automatically switches to newest available show</div>
+                `;
+            } else if (shows[currentShow]) {
+                currentShowEl.innerHTML = `
+                    <div class="show-title">Currently Playing: ${shows[currentShow].title}</div>
+                    <div class="show-details">${shows[currentShow].details}</div>
+                `;
+            }
+        }
+
+        function updateLiveButton() {
+            const liveButton = document.getElementById('live-button');
+            
+            if (isLive) {
+                liveButton.classList.add('active');
+                liveButton.innerHTML = '🔴 LIVE MODE';
+            } else {
+                liveButton.classList.remove('active');
+                liveButton.innerHTML = '🔴 Go Live';
+            }
+        }
+
+        function reloadPlayer() {
+            console.log('Reloading player...');
+            initializePlayer();
+        }
+
+        function updateStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('stream-status').textContent = 
+                        data.stream_exists ? 'Active' : 'Inactive';
+                    document.getElementById('last-updated').textContent = 
+                        new Date(data.last_modified).toLocaleString();
+                })
+                .catch(error => {
+                    console.log('Status check failed:', error);
+                    document.getElementById('stream-status').textContent = 'Unknown';
+                    document.getElementById('last-updated').textContent = 'Unknown';
+                });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePlayer();
+            updateStatus();
+            updateCurrentShowDisplay();
+            
+            // Set up show selector
+            document.getElementById('show-select').addEventListener('change', function() {
+                if (this.value) {
+                    switchToShow(this.value);
+                }
+            });
+            
+            // Update status every 30 seconds
+            setInterval(updateStatus, 30000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+﻿# FFmpeg Stream Launcher for Windows PowerShell
+param(
+    [string]$Action = "help",
+    [string]$TargetDate = ""
+)
+
+$ScriptDir = $PSScriptRoot
+$StreamDir = Join-Path $ScriptDir "stream"
+$LogDir = Join-Path $ScriptDir "    # Start FFmpeg process with simple copy (emergency performance mode)
+    $FFmpegArgs = @(
+        "-i", $StreamUrl,
+        "-c", "copy",                # Simple copy - no re-encoding
+        "-f", "hls",
+        "-hls_time", "4",            # Shorter segments for mobile
+        "-hls_list_size", "4",       # Fewer segments to reduce memory
+        "-hls_delete_threshold", "50",
+        "-hls_flags", "delete_segments",
+        "-hls_segment_filename", (Join-Path $StreamDir "segment_%03d.ts"),
+        (Join-Path $StreamDir "output.m3u8")
+    )ile = Join-Path $LogDir "ffmpeg.pid"
+$LogFile = Join-Path $LogDir "ffmpeg.log"
+
+# Ensure directories exist
+if (!(Test-Path $StreamDir)) { New-Item -ItemType Directory -Path $StreamDir -Force }
+if (!(Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force }
+
+# Known Phish show dates (all 2025 tours)
+$KnownDates = @(
+    # Mexico Tour (Jan-Feb 2025)
+    "250129", "250130", "250131", "250201",
+    
+    # Spring Tour (April 2025)  
+    "250418", "250419", "250420", "250422", "250423",
+    
+    # Summer Tour - June 2025
+    "250620", "250621", "250622", "250624", "250627",
+    
+    # Summer Tour - July 2025 (most likely active streams)
+    "250727", "250726", "250725",  # Saratoga Springs, NY  
+    "250723", "250722",            # Forest Hills Stadium, NY (CURRENT TOUR!)
+    "250720", "250719", "250718",  # Chicago
+    "250716", "250715",            # Philadelphia  
+    "250713", "250712", "250711",  # North Charleston
+    "250709",                      # Columbus
+    "250705", "250704", "250703",  # Boulder
+    
+    # Summer Tour - September 2025
+    "250912", "250913", "250914", "250916"
+)
+
+function Get-CurrentDate {
+    # Get Mountain Time
+    $MountainTime = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId((Get-Date), "Mountain Standard Time")
+    return $MountainTime.ToString("yyMMdd")
+}
+
+function Test-StreamUrl {
+    param([string]$Url)
+    try {
+        $response = Invoke-WebRequest -Uri $Url -Method Head -TimeoutSec 10 -ErrorAction Stop
+        return $response.StatusCode -eq 200
+    }
+    catch {
+        return $false
+    }
+}
+
+function Find-StreamUrl {
+    param([string]$RequestedDate = "")
+    
+    $BaseUrl = "https://forbinaquarium.com/Live/00"
+    
+    # If specific date requested (and not LIVE mode), try that first
+    if ($RequestedDate -and $RequestedDate -ne "LIVE") {
+        try {
+            # Parse the date and convert to yyMMdd format
+            $ParsedDate = [DateTime]::Parse($RequestedDate)
+            $DateStr = $ParsedDate.ToString("yyMMdd")
+            $TestUrl = "$BaseUrl/ph$DateStr/ph${DateStr}_1080p.m3u8"
+            Write-Host "Testing requested date: $RequestedDate -> $DateStr -> $TestUrl"
+            Add-Content -Path $LogFile -Value "$(Get-Date): Testing requested date: $RequestedDate -> $DateStr -> $TestUrl"
+            
+            if (Test-StreamUrl $TestUrl) {
+                Write-Host "SUCCESS: Found stream for requested date $RequestedDate"
+                Add-Content -Path $LogFile -Value "$(Get-Date): SUCCESS: Found stream for requested date $RequestedDate"
+                return $TestUrl
+            } else {
+                Write-Host "WARNING: No stream found for requested date $RequestedDate, trying fallbacks"
+                Add-Content -Path $LogFile -Value "$(Get-Date): WARNING: No stream found for requested date $RequestedDate, trying fallbacks"
+            }
+        }
+        catch {
+            Write-Host "ERROR: Failed to parse requested date '$RequestedDate': $($_.Exception.Message)"
+            Add-Content -Path $LogFile -Value "$(Get-Date): ERROR: Failed to parse requested date '$RequestedDate': $($_.Exception.Message)"
+        }
+    }
+    
+    # LIVE mode: Try to find the best available stream
+    Write-Host "LIVE/AUTO mode: Finding best available stream..."
+    Add-Content -Path $LogFile -Value "$(Get-Date): LIVE/AUTO mode: Finding best available stream..."
+    
+    # Try current date first (might be a live show happening now)
+    $CurrentDate = Get-CurrentDate
+    $TestUrl = "$BaseUrl/ph$CurrentDate/ph${CurrentDate}_1080p.m3u8"
+    Write-Host "Testing current date (live): $TestUrl"
+    Add-Content -Path $LogFile -Value "$(Get-Date): Testing current date (live): $TestUrl"
+    
+    if (Test-StreamUrl $TestUrl) {
+        Write-Host "SUCCESS: Found LIVE stream for today ($CurrentDate)"
+        Add-Content -Path $LogFile -Value "$(Get-Date): SUCCESS: Found LIVE stream for today ($CurrentDate)"
+        return $TestUrl
+    }
+    
+    # Try yesterday (shows often run late or are rebroadcast)
+    $YesterdayDate = (Get-Date).AddDays(-1)
+    $MountainTime = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($YesterdayDate, "Mountain Standard Time")
+    $DateStr = $MountainTime.ToString("yyMMdd")
+    $TestUrl = "$BaseUrl/ph$DateStr/ph${DateStr}_1080p.m3u8"
+    Write-Host "Testing yesterday's stream: $TestUrl"
+    Add-Content -Path $LogFile -Value "$(Get-Date): Testing yesterday's stream: $TestUrl"
+    
+    if (Test-StreamUrl $TestUrl) {
+        Write-Host "SUCCESS: Found yesterday's stream ($DateStr)"
+        Add-Content -Path $LogFile -Value "$(Get-Date): SUCCESS: Found yesterday's stream ($DateStr)"
+        return $TestUrl
+    }
+    
+    # Try recent known dates (sorted by likelihood of having streams)
+    Write-Host "Checking recent known show dates..."
+    Add-Content -Path $LogFile -Value "$(Get-Date): Checking recent known show dates..."
+    foreach ($Date in $KnownDates) {
+        $TestUrl = "$BaseUrl/ph$Date/ph${Date}_1080p.m3u8"
+        Write-Host "Testing known date: $TestUrl"
+        Add-Content -Path $LogFile -Value "$(Get-Date): Testing known date: $TestUrl"
+        
+        if (Test-StreamUrl $TestUrl) {
+            Write-Host "SUCCESS: Found stream for show date $Date"
+            Add-Content -Path $LogFile -Value "$(Get-Date): SUCCESS: Found stream for show date $Date"
+            return $TestUrl
+        }
+    }
+    
+    # Fallback: try last 7 days
+    Write-Host "Trying fallback dates (last 7 days)..."
+    Add-Content -Path $LogFile -Value "$(Get-Date): Trying fallback dates (last 7 days)..."
+    for ($i = 1; $i -le 7; $i++) {
+        $PastDate = (Get-Date).AddDays(-$i)
+        $MountainTime = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($PastDate, "Mountain Standard Time")
+        $DateStr = $MountainTime.ToString("yyMMdd")
+        $TestUrl = "$BaseUrl/ph$DateStr/ph${DateStr}_1080p.m3u8"
+        
+        Write-Host "Testing past date (-${i}d): $TestUrl"
+        Add-Content -Path $LogFile -Value "$(Get-Date): Testing past date (-${i}d): $TestUrl"
+        
+        if (Test-StreamUrl $TestUrl) {
+            Write-Host "SUCCESS: Found stream from $i days ago ($DateStr)"
+            Add-Content -Path $LogFile -Value "$(Get-Date): SUCCESS: Found stream from $i days ago ($DateStr)"
+            return $TestUrl
+        }
+    }
+    
+    return $null
+}
+
+function Test-FFmpegRunning {
+    if (Test-Path $PidFile) {
+        $ProcessId = Get-Content $PidFile -ErrorAction SilentlyContinue
+        if ($ProcessId) {
+            $Process = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
+            if ($Process -and $Process.ProcessName -eq "ffmpeg") {
+                return $true
+            }
+        }
+    }
+    return $false
+}
+
+function Start-FFmpeg {
+    if (Test-FFmpegRunning) {
+        Write-Host "FFmpeg is already running"
+        return
+    }
+    
+    Write-Host "$(Get-Date): Starting FFmpeg stream relay..."
+    Add-Content -Path $LogFile -Value "$(Get-Date): Starting FFmpeg stream relay..."
+    
+    # Clean old segments
+    Get-ChildItem -Path $StreamDir -Filter "*.ts" | Remove-Item -Force
+    Get-ChildItem -Path $StreamDir -Filter "*.m3u8" | Remove-Item -Force
+    
+    # Find available stream
+    $StreamUrl = Find-StreamUrl -RequestedDate $TargetDate
+    if (-not $StreamUrl) {
+        Write-Host "ERROR - No available stream found!"
+        Add-Content -Path $LogFile -Value "$(Get-Date): ERROR - No available stream found!"
+        return
+    }
+    
+    Write-Host "Using stream URL: $StreamUrl"
+    Add-Content -Path $LogFile -Value "$(Get-Date): Using stream URL: $StreamUrl"
+    
+    # Find FFmpeg executable
+    $FFmpegPaths = @(
+        "C:\Users\shulm\OneDrive\Desktop\MyTube\ffmpeg-2025-07-07-git-d2828ab284-essentials_build\bin\ffmpeg.exe",
+        "ffmpeg.exe",
+        "C:\ffmpeg\bin\ffmpeg.exe",
+        "C:\Program Files\ffmpeg\bin\ffmpeg.exe",
+        ".\ffmpeg\bin\ffmpeg.exe",
+        "C:\Users\shulm\OneDrive\Desktop\ffmpeg\bin\ffmpeg.exe"
+    )
+    
+    $FFmpegExe = $null
+    foreach ($Path in $FFmpegPaths) {
+        if (Test-Path $Path) {
+            $FFmpegExe = $Path
+            break
+        }
+        try {
+            $null = Get-Command $Path -ErrorAction Stop
+            $FFmpegExe = $Path
+            break
+        }
+        catch {
+            # Continue searching
+        }
+    }
+    
+    if (-not $FFmpegExe) {
+        Write-Host "ERROR - FFmpeg not found! Please extract ffmpeg-2025-07-07-git-d2828ab284-essentials_build.7z"
+        Write-Host "Expected locations: C:\ffmpeg\bin\ffmpeg.exe or add to PATH"
+        Add-Content -Path $LogFile -Value "$(Get-Date): ERROR - FFmpeg not found!"
+        return
+    }
+    
+    Write-Host "Using FFmpeg: $FFmpegExe"
+    Add-Content -Path $LogFile -Value "$(Get-Date): Using FFmpeg: $FFmpegExe"
+    
+    # Start FFmpeg process with simple copy (best quality, no re-encoding)
+    $FFmpegArgs = @(
+        "-i", $StreamUrl,
+        "-c", "copy",                # Simple copy - preserves original quality
+        "-f", "hls",
+        "-hls_time", "6",
+        "-hls_list_size", "6",
+        "-hls_delete_threshold", "50",
+        "-hls_flags", "delete_segments",
+        "-hls_segment_filename", (Join-Path $StreamDir "segment_%03d.ts"),
+        (Join-Path $StreamDir "output.m3u8")
+    )
+    
+    $ProcessInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $ProcessInfo.FileName = $FFmpegExe
+    $ProcessInfo.Arguments = $FFmpegArgs -join " "
+    $ProcessInfo.RedirectStandardOutput = $true
+    $ProcessInfo.RedirectStandardError = $true
+    $ProcessInfo.UseShellExecute = $false
+    $ProcessInfo.CreateNoWindow = $true
+    
+    $Process = New-Object System.Diagnostics.Process
+    $Process.StartInfo = $ProcessInfo
+    
+    # Setup output handling
+    $Process.add_OutputDataReceived({
+        param($sender, $e)
+        if ($e.Data) {
+            Add-Content -Path $LogFile -Value "$(Get-Date): $($e.Data)"
+        }
+    })
+    
+    $Process.add_ErrorDataReceived({
+        param($sender, $e)
+        if ($e.Data) {
+            Add-Content -Path $LogFile -Value "$(Get-Date): ERROR: $($e.Data)"
+        }
+    })
+    
+    $Process.Start()
+    $Process.BeginOutputReadLine()
+    $Process.BeginErrorReadLine()
+    
+    # Save PID
+    $Process.Id | Out-File -FilePath $PidFile -Encoding ascii
+    
+    Write-Host "FFmpeg started with PID: $($Process.Id)"
+    Add-Content -Path $LogFile -Value "$(Get-Date): FFmpeg started with PID: $($Process.Id)"
+}
+
+function Stop-FFmpeg {
+    if (Test-Path $PidFile) {
+        $ProcessId = Get-Content $PidFile -ErrorAction SilentlyContinue
+        if ($ProcessId) {
+            $Process = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
+            if ($Process) {
+                Write-Host "Stopping FFmpeg (PID: $ProcessId)..."
+                Add-Content -Path $LogFile -Value "$(Get-Date): Stopping FFmpeg (PID: $ProcessId)..."
+                $Process.Kill()
+                $Process.WaitForExit(5000)
+            }
+        }
+        Remove-Item $PidFile -Force -ErrorAction SilentlyContinue
+    }
+    Write-Host "FFmpeg stopped"
+    Add-Content -Path $LogFile -Value "$(Get-Date): FFmpeg stopped"
+}
+
+function Get-FFmpegStatus {
+    if (Test-FFmpegRunning) {
+        $ProcessId = Get-Content $PidFile
+        Write-Host "FFmpeg is running (PID: $ProcessId)"
+        
+        $OutputFile = Join-Path $StreamDir "output.m3u8"
+        if (Test-Path $OutputFile) {
+            $FileInfo = Get-Item $OutputFile
+            Write-Host "Stream file exists: $($FileInfo.Length) bytes, modified: $($FileInfo.LastWriteTime)"
+        }
+        else {
+            Write-Host "Warning: No stream file found"
+        }
+    }
+    else {
+        Write-Host "FFmpeg is not running"
+    }
+}
+
+function Start-Monitor {
+    Write-Host "Starting monitor mode - FFmpeg will auto-restart if it crashes"
+    Write-Host "Press Ctrl+C to stop monitoring"
+    
+    while ($true) {
+        if (-not (Test-FFmpegRunning)) {
+            Write-Host "$(Get-Date): FFmpeg not running, starting..."
+            Add-Content -Path $LogFile -Value "$(Get-Date): FFmpeg not running, starting..."
+            Start-FFmpeg
+        }
+        Start-Sleep -Seconds 30
+    }
+}
+
+# Main script logic
+switch ($Action.ToLower()) {
+    "start" {
+        Start-FFmpeg
+    }
+    "stop" {
+        Stop-FFmpeg
+    }
+    "restart" {
+        Stop-FFmpeg
+        Start-Sleep -Seconds 2
+        Start-FFmpeg
+    }
+    "status" {
+        Get-FFmpegStatus
+    }
+    "monitor" {
+        Start-Monitor
+    }
+    default {
+        Write-Host "Usage: .\ffmpeg-launcher.ps1 {start|stop|restart|status|monitor}"
+    }
+}
+

@@ -1,0 +1,161 @@
+07/21/2025 11:43:53: FFmpeg stopped
+07/21/2025 11:43:55: Starting FFmpeg stream relay...
+07/21/2025 11:43:55: Testing known date: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 11:43:56: Using stream URL: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 11:43:56: Using FFmpeg: ffmpeg.exe
+07/21/2025 11:44:00: FFmpeg started with PID: 7460
+07/21/2025 12:17:25: Stopping FFmpeg (PID: 7460)...
+07/21/2025 12:17:25: FFmpeg stopped
+07/21/2025 12:17:27: Starting FFmpeg stream relay...
+07/21/2025 12:17:27: Testing requested date: 2025-07-04 -> 250704 -> https://forbinaquarium.com/Live/00/ph250704/ph250704_1080p.m3u8
+07/21/2025 12:17:28: WARNING: No stream found for requested date 2025-07-04, trying fallbacks
+07/21/2025 12:17:28: Testing known date: https://forbinaquarium.com/Live/00/ph250129/ph250129_1080p.m3u8
+07/21/2025 12:17:28: Testing known date: https://forbinaquarium.com/Live/00/ph250130/ph250130_1080p.m3u8
+07/21/2025 12:17:29: Testing known date: https://forbinaquarium.com/Live/00/ph250131/ph250131_1080p.m3u8
+07/21/2025 12:17:29: Testing known date: https://forbinaquarium.com/Live/00/ph250201/ph250201_1080p.m3u8
+07/21/2025 12:17:30: Testing known date: https://forbinaquarium.com/Live/00/ph250418/ph250418_1080p.m3u8
+07/21/2025 12:17:30: Testing known date: https://forbinaquarium.com/Live/00/ph250419/ph250419_1080p.m3u8
+07/21/2025 12:17:31: Testing known date: https://forbinaquarium.com/Live/00/ph250420/ph250420_1080p.m3u8
+07/21/2025 12:17:31: Testing known date: https://forbinaquarium.com/Live/00/ph250422/ph250422_1080p.m3u8
+07/21/2025 12:17:31: Testing known date: https://forbinaquarium.com/Live/00/ph250423/ph250423_1080p.m3u8
+07/21/2025 12:17:32: Testing known date: https://forbinaquarium.com/Live/00/ph250620/ph250620_1080p.m3u8
+07/21/2025 12:17:32: Testing known date: https://forbinaquarium.com/Live/00/ph250621/ph250621_1080p.m3u8
+07/21/2025 12:17:33: Testing known date: https://forbinaquarium.com/Live/00/ph250622/ph250622_1080p.m3u8
+07/21/2025 12:17:33: Testing known date: https://forbinaquarium.com/Live/00/ph250624/ph250624_1080p.m3u8
+07/21/2025 12:17:34: Testing known date: https://forbinaquarium.com/Live/00/ph250627/ph250627_1080p.m3u8
+07/21/2025 12:17:34: Testing known date: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 12:17:34: Using stream URL: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 12:17:34: Using FFmpeg: ffmpeg.exe
+07/21/2025 12:17:35: FFmpeg started with PID: 14704
+07/21/2025 12:48:11: Stopping FFmpeg (PID: 14704)...
+07/21/2025 12:48:11: FFmpeg stopped
+07/21/2025 12:48:13: Starting FFmpeg stream relay...
+07/21/2025 12:48:13: Testing requested date: 2025-07-22 -> 250722 -> https://forbinaquarium.com/Live/00/ph250722/ph250722_1080p.m3u8
+07/21/2025 12:48:14: WARNING: No stream found for requested date 2025-07-22, trying fallbacks
+07/21/2025 12:48:14: Testing known date: https://forbinaquarium.com/Live/00/ph250129/ph250129_1080p.m3u8
+07/21/2025 12:48:14: Testing known date: https://forbinaquarium.com/Live/00/ph250130/ph250130_1080p.m3u8
+07/21/2025 12:48:15: Testing known date: https://forbinaquarium.com/Live/00/ph250131/ph250131_1080p.m3u8
+07/21/2025 12:48:15: Testing known date: https://forbinaquarium.com/Live/00/ph250201/ph250201_1080p.m3u8
+07/21/2025 12:48:15: Testing known date: https://forbinaquarium.com/Live/00/ph250418/ph250418_1080p.m3u8
+07/21/2025 12:48:16: Testing known date: https://forbinaquarium.com/Live/00/ph250419/ph250419_1080p.m3u8
+07/21/2025 12:48:16: Testing known date: https://forbinaquarium.com/Live/00/ph250420/ph250420_1080p.m3u8
+07/21/2025 12:48:17: Testing known date: https://forbinaquarium.com/Live/00/ph250422/ph250422_1080p.m3u8
+07/21/2025 12:48:17: Testing known date: https://forbinaquarium.com/Live/00/ph250423/ph250423_1080p.m3u8
+07/21/2025 12:48:18: Testing known date: https://forbinaquarium.com/Live/00/ph250620/ph250620_1080p.m3u8
+07/21/2025 12:48:18: Testing known date: https://forbinaquarium.com/Live/00/ph250621/ph250621_1080p.m3u8
+07/21/2025 12:48:18: Testing known date: https://forbinaquarium.com/Live/00/ph250622/ph250622_1080p.m3u8
+07/21/2025 12:48:19: Testing known date: https://forbinaquarium.com/Live/00/ph250624/ph250624_1080p.m3u8
+07/21/2025 12:48:19: Testing known date: https://forbinaquarium.com/Live/00/ph250627/ph250627_1080p.m3u8
+07/21/2025 12:48:20: Testing known date: https://forbinaquarium.com/Live/00/ph250727/ph250727_1080p.m3u8
+07/21/2025 12:48:20: Testing known date: https://forbinaquarium.com/Live/00/ph250726/ph250726_1080p.m3u8
+07/21/2025 12:48:20: Testing known date: https://forbinaquarium.com/Live/00/ph250725/ph250725_1080p.m3u8
+07/21/2025 12:48:21: Testing known date: https://forbinaquarium.com/Live/00/ph250723/ph250723_1080p.m3u8
+07/21/2025 12:48:21: Testing known date: https://forbinaquarium.com/Live/00/ph250722/ph250722_1080p.m3u8
+07/21/2025 12:48:22: Testing known date: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 12:48:22: Using stream URL: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 12:48:22: Using FFmpeg: ffmpeg.exe
+07/21/2025 12:48:22: FFmpeg started with PID: 20980
+07/21/2025 12:50:22: Stopping FFmpeg (PID: 20980)...
+07/21/2025 12:50:22: FFmpeg stopped
+07/21/2025 12:50:24: Starting FFmpeg stream relay...
+07/21/2025 12:50:24: LIVE/AUTO mode: Finding best available stream...
+07/21/2025 12:50:24: Testing current date (live): https://forbinaquarium.com/Live/00/ph250721/ph250721_1080p.m3u8
+07/21/2025 12:50:24: Testing yesterday's stream: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 12:50:25: SUCCESS: Found yesterday's stream (250720)
+07/21/2025 12:50:25: Using stream URL: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 12:50:25: Using FFmpeg: ffmpeg.exe
+07/21/2025 12:50:25: FFmpeg started with PID: 2636
+07/21/2025 13:07:23: Stopping FFmpeg (PID: 2636)...
+07/21/2025 13:07:23: FFmpeg stopped
+07/21/2025 13:07:25: Starting FFmpeg stream relay...
+07/21/2025 13:07:25: LIVE/AUTO mode: Finding best available stream...
+07/21/2025 13:07:25: Testing current date (live): https://forbinaquarium.com/Live/00/ph250721/ph250721_1080p.m3u8
+07/21/2025 13:07:26: Testing yesterday's stream: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 13:07:26: SUCCESS: Found yesterday's stream (250720)
+07/21/2025 13:07:26: Using stream URL: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 13:07:27: Using FFmpeg: ffmpeg.exe
+07/21/2025 13:07:27: FFmpeg started with PID: 10992
+07/21/2025 13:10:22: Stopping FFmpeg (PID: 10992)...
+07/21/2025 13:10:22: FFmpeg stopped
+07/21/2025 13:10:24: Starting FFmpeg stream relay...
+07/21/2025 13:10:24: LIVE/AUTO mode: Finding best available stream...
+07/21/2025 13:10:24: Testing current date (live): https://forbinaquarium.com/Live/00/ph250721/ph250721_1080p.m3u8
+07/21/2025 13:10:25: Testing yesterday's stream: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 13:10:25: SUCCESS: Found yesterday's stream (250720)
+07/21/2025 13:10:25: Using stream URL: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 13:10:25: Using FFmpeg: ffmpeg.exe
+07/21/2025 13:10:25: FFmpeg started with PID: 12452
+07/21/2025 13:22:15: Stopping FFmpeg (PID: 12452)...
+07/21/2025 13:22:15: FFmpeg stopped
+07/21/2025 13:22:17: Starting FFmpeg stream relay...
+07/21/2025 13:22:17: LIVE/AUTO mode: Finding best available stream...
+07/21/2025 13:22:17: Testing current date (live): https://forbinaquarium.com/Live/00/ph250721/ph250721_1080p.m3u8
+07/21/2025 13:22:17: Testing yesterday's stream: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 13:22:18: SUCCESS: Found yesterday's stream (250720)
+07/21/2025 13:22:18: Using stream URL: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 13:22:18: Using FFmpeg: ffmpeg.exe
+07/21/2025 13:22:18: FFmpeg started with PID: 21124
+07/21/2025 13:25:16: Stopping FFmpeg (PID: 21124)...
+07/21/2025 13:25:16: FFmpeg stopped
+07/21/2025 13:25:18: Starting FFmpeg stream relay...
+07/21/2025 13:25:18: LIVE/AUTO mode: Finding best available stream...
+07/21/2025 13:25:18: Testing current date (live): https://forbinaquarium.com/Live/00/ph250721/ph250721_1080p.m3u8
+07/21/2025 13:25:19: Testing yesterday's stream: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 13:25:19: SUCCESS: Found yesterday's stream (250720)
+07/21/2025 13:25:19: Using stream URL: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 13:25:19: Using FFmpeg: ffmpeg.exe
+07/21/2025 13:25:19: FFmpeg started with PID: 18064
+07/21/2025 14:29:06: Stopping FFmpeg (PID: 18064)...
+07/21/2025 14:29:06: FFmpeg stopped
+07/21/2025 14:29:08: Starting FFmpeg stream relay...
+07/21/2025 14:29:08: LIVE/AUTO mode: Finding best available stream...
+07/21/2025 14:29:08: Testing current date (live): https://forbinaquarium.com/Live/00/ph250721/ph250721_1080p.m3u8
+07/21/2025 14:29:09: Testing yesterday's stream: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 14:29:10: SUCCESS: Found yesterday's stream (250720)
+07/21/2025 14:29:10: Using stream URL: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 14:29:10: Using FFmpeg: ffmpeg.exe
+07/21/2025 14:29:10: FFmpeg started with PID: 16328
+07/21/2025 22:11:59: Stopping FFmpeg (PID: 21276)...
+07/21/2025 22:11:59: FFmpeg stopped
+07/21/2025 22:12:01: Starting FFmpeg stream relay...
+07/21/2025 22:12:01: Using hardcoded stream URL for requested date: https://forbinaquarium.com/Live/00/ph250721/ph250721_1080p.m3u8
+07/21/2025 22:12:01: Using stream URL: https://forbinaquarium.com/Live/00/ph250721/ph250721_1080p.m3u8
+07/21/2025 22:12:01: Using FFmpeg: ffmpeg.exe
+07/21/2025 22:12:02: FFmpeg started with PID: 14588
+07/21/2025 22:12:50: FFmpeg stopped
+07/21/2025 22:12:52: Starting FFmpeg stream relay...
+07/21/2025 22:12:52: Using hardcoded stream URL for requested date: https://forbinaquarium.com/Live/00/ph250722/ph250722_1080p.m3u8
+07/21/2025 22:12:52: Using stream URL: https://forbinaquarium.com/Live/00/ph250722/ph250722_1080p.m3u8
+07/21/2025 22:12:52: Using FFmpeg: ffmpeg.exe
+07/21/2025 22:15:24: FFmpeg stopped
+07/21/2025 22:15:26: Starting FFmpeg stream relay...
+07/21/2025 22:15:26: Using hardcoded stream URL for requested date: https://forbinaquarium.com/Live/00/ph250719/ph250719_1080p.m3u8
+07/21/2025 22:15:26: Using stream URL: https://forbinaquarium.com/Live/00/ph250719/ph250719_1080p.m3u8
+07/21/2025 22:15:26: Using FFmpeg: ffmpeg.exe
+07/21/2025 22:15:26: FFmpeg started with PID: 5096
+07/21/2025 22:15:36: FFmpeg stopped
+07/21/2025 22:15:38: Starting FFmpeg stream relay...
+07/21/2025 22:15:38: Using hardcoded stream URL for requested date: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 22:15:38: Using stream URL: https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8
+07/21/2025 22:15:38: Using FFmpeg: ffmpeg.exe
+07/21/2025 22:15:38: FFmpeg started with PID: 16844
+07/21/2025 22:26:53: Stopping FFmpeg (PID: 16844)...
+07/21/2025 22:26:54: FFmpeg stopped
+07/21/2025 22:27:16: FFmpeg stopped
+07/21/2025 22:27:18: Starting FFmpeg stream relay...
+07/21/2025 22:27:19: Using hardcoded stream URL for requested date: https://forbinaquarium.com/Live/00/ph250719/ph250719_1080p.m3u8
+07/21/2025 22:27:19: Using stream URL: https://forbinaquarium.com/Live/00/ph250719/ph250719_1080p.m3u8
+07/21/2025 22:27:19: Using FFmpeg: ffmpeg.exe
+07/21/2025 22:27:19: FFmpeg started with PID: 23048
+07/21/2025 22:30:41: FFmpeg stopped
+07/21/2025 22:30:43: Starting FFmpeg stream relay...
+07/21/2025 22:30:43: Using hardcoded stream URL for requested date: https://forbinaquarium.com/Live/00/ph250718/ph250718_1080p.m3u8
+07/21/2025 22:30:43: Using stream URL: https://forbinaquarium.com/Live/00/ph250718/ph250718_1080p.m3u8
+07/21/2025 22:30:43: Using FFmpeg: ffmpeg.exe
+07/21/2025 22:30:44: FFmpeg started with PID: 20816
+07/21/2025 22:31:30: FFmpeg not running, starting...
+07/21/2025 22:31:30: Starting FFmpeg stream relay...
+07/21/2025 22:31:30: Using hardcoded stream URL for requested date: https://forbinaquarium.com/Live/00/ph250718/ph250718_1080p.m3u8
+07/21/2025 22:31:30: Using stream URL: https://forbinaquarium.com/Live/00/ph250718/ph250718_1080p.m3u8
+07/21/2025 22:31:30: Using FFmpeg: ffmpeg.exe
+07/21/2025 22:31:30: FFmpeg started with PID: 19532

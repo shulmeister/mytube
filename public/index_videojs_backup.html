@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shulmeister's MyTube - Phish Live Stream</title>
+    <link href="https://vjs.zencdn.net/8.12.0/video-js.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #212121;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: #f44336;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .video-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .video-js {
+            width: 100%;
+            height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .video-js {
+                height: 500px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .video-js {
+                height: 600px;
+            }
+        }
+
+        .controls-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .controls-section h3 {
+            margin-bottom: 1rem;
+            color: #ff6b6b;
+        }
+
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #ff5252;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .date-selector {
+            margin-bottom: 1rem;
+        }
+
+        .date-selector select {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            min-width: 200px;
+        }
+
+        .stream-info {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stream-info h3 {
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .info-item {
+            background: #333;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-value {
+            font-weight: bold;
+            word-break: break-all;
+        }
+
+        .logs-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .logs-section h3 {
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+        }
+
+        .logs-container {
+            background: #000;
+            border-radius: 6px;
+            padding: 1rem;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            border-top: 1px solid #333;
+            margin-top: 2rem;
+        }
+
+        .footer a {
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">🎸 Shulmeister's MyTube</div>
+        <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Connecting...</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="video-section">
+            <video
+                id="phish-player"
+                class="video-js vjs-default-skin"
+                controls
+                preload="auto"
+                width="800"
+                height="600"
+                poster=""
+                data-setup='{}'>
+                <p class="vjs-no-js">
+                    To view this video please enable JavaScript, and consider upgrading to a web browser that
+                    <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
+                </p>
+            </video>
+        </div>
+
+        <div class="controls-section">
+            <h3>🎸 Select Phish Show</h3>
+            
+            <div class="date-selector">
+                <select id="dateSelect" onchange="changeShow()">
+                    <option value="">Loading shows...</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn" onclick="testStream()">🔧 Test Stream</button>
+                <button class="btn" onclick="reloadPlayer()">🔄 Reload Player</button>
+            </div>
+        </div>
+
+        <div class="stream-info">
+            <h3>📊 Stream Information</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Stream Status</div>
+                    <div class="info-value" id="streamStatus">Checking...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Last Updated</div>
+                    <div class="info-value" id="lastUpdated">--</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Stream URL</div>
+                    <div class="info-value" id="streamUrl">http://localhost:3000/stream/output.m3u8</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Current Time (MT)</div>
+                    <div class="info-value" id="currentTime">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="logs-section">
+            <h3>📝 Stream Logs</h3>
+            <div class="logs-container" id="logsContainer">
+                Loading logs...
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>🎸 Built for Phish fans by Phish fans ✨</p>
+        <p><a href="https://phish.com" target="_blank">Official Phish Website</a> | 
+           <a href="https://github.com/shulmeister/mytube" target="_blank">GitHub</a></p>
+    </footer>
+
+    <script src="https://vjs.zencdn.net/8.12.0/video.min.js"></script>
+    <script>
+        let player;
+        let statusInterval;
+
+        // Initialize video player
+        function initPlayer() {
+            // Only dispose if player exists and is not disposed already
+            if (player && !player.isDisposed()) {
+                player.dispose();
+                player = null;
+            }
+            
+            try {
+                const streamUrl = '/stream/output.m3u8?t=' + Date.now();
+                console.log('Initializing player with stream URL:', streamUrl);
+                
+                player = videojs('phish-player', {
+                    fluid: true,
+                    responsive: true,
+                    autoplay: false,
+                    muted: true,
+                    html5: {
+                        vhs: {
+                            overrideNative: true,
+                            withCredentials: false
+                        }
+                    }
+                });
+
+                player.ready(() => {
+                    console.log('Player is ready');
+                    
+                    // Set the source after player is ready
+                    player.src({
+                        src: streamUrl,
+                        type: 'application/x-mpegURL'
+                    });
+                    
+                    console.log('Player sources after setting:', player.currentSources());
+                    
+                    // Add click handler for manual play
+                    player.on('click', () => {
+                        console.log('Player clicked, attempting to play...');
+                        player.play().catch(e => {
+                            console.error('Play failed after click:', e);
+                            updateStatus('❌ Play Failed - Check stream', false);
+                        });
+                    });
+                    
+                    // Try to load the source
+                    player.load();
+                });
+
+                player.on('error', (error) => {
+                    console.error('Player error:', error);
+                    const errorObj = player.error();
+                    console.error('Error details:', errorObj);
+                    
+                    if (errorObj) {
+                        console.error('Error code:', errorObj.code);
+                        console.error('Error message:', errorObj.message);
+                        updateStatus(`Stream Error (${errorObj.code}): ${errorObj.message}`, false);
+                    } else {
+                        updateStatus('Stream Error - Trying to reconnect...', false);
+                    }
+                });
+
+                player.on('loadstart', () => {
+                    console.log('Stream loading started');
+                    updateStatus('🔄 Loading Stream...', true);
+                });
+
+                player.on('loadedmetadata', () => {
+                    console.log('Stream metadata loaded');
+                    updateStatus('� Stream Metadata Loaded', true);
+                });
+
+                player.on('canplay', () => {
+                    console.log('Stream can play');
+                    updateStatus('🔴 Live Stream Ready', true);
+                });
+
+                player.on('playing', () => {
+                    console.log('Stream is playing');
+                    updateStatus('🔴 Live Stream Playing', true);
+                });
+
+                player.on('waiting', () => {
+                    console.log('Stream buffering');
+                    updateStatus('⏳ Buffering...', true);
+                });
+
+            } catch (error) {
+                console.error('Failed to initialize player:', error);
+                updateStatus('Player Initialization Error', false);
+            }
+        }
+
+        // Update status indicator
+        function updateStatus(text, isOnline) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            statusText.textContent = text;
+            statusDot.className = `status-dot ${isOnline ? '' : 'offline'}`;
+        }
+
+        // Check stream status
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                if (data.stream_exists) {
+                    updateStatus('🔴 Live Stream Active', true);
+                    document.getElementById('streamStatus').textContent = '✅ Active';
+                    document.getElementById('lastUpdated').textContent = 
+                        new Date(data.last_modified).toLocaleString();
+                } else {
+                    updateStatus('⚪ Stream Offline', false);
+                    document.getElementById('streamStatus').textContent = '❌ Offline';
+                }
+            } catch (error) {
+                console.error('Status check failed:', error);
+                updateStatus('Connection Error', false);
+                document.getElementById('streamStatus').textContent = '⚠️ Error';
+            }
+        }
+
+        // Load stream logs
+        async function loadLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                const data = await response.json();
+                const logsContainer = document.getElementById('logsContainer');
+                
+                logsContainer.innerHTML = data.logs.join('\n') || 'No logs available';
+                logsContainer.scrollTop = logsContainer.scrollHeight;
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+                document.getElementById('logsContainer').textContent = 'Failed to load logs';
+            }
+        }
+
+        // Load available dates and auto-select most recent show
+        async function loadDates() {
+            try {
+                const response = await fetch('/api/dates');
+                const dates = await response.json();
+                const select = document.getElementById('dateSelect');
+                
+                select.innerHTML = '';
+                
+                // Find most recent known show (first one with 🎸)
+                let mostRecentShow = null;
+                dates.forEach(date => {
+                    const option = document.createElement('option');
+                    option.value = date.date;
+                    option.textContent = `${date.formatted} ${date.isKnownShow ? '🎸' : ''}`;
+                    select.appendChild(option);
+                    
+                    // Auto-select first known show
+                    if (date.isKnownShow && !mostRecentShow) {
+                        mostRecentShow = date.date;
+                        option.selected = true;
+                    }
+                });
+                
+                // Note: Don't auto-load on page init to prevent player disposal
+                console.log(`Most recent show available: ${mostRecentShow}`);
+            } catch (error) {
+                console.error('Failed to load dates:', error);
+                document.getElementById('dateSelect').innerHTML = 
+                    '<option value="">Failed to load shows</option>';
+            }
+        }
+
+        // Change to selected show (only when user manually selects)
+        async function changeShow(selectedDate) {
+            const select = document.getElementById('dateSelect');
+            const showDate = selectedDate || select.value;
+            
+            if (!showDate) return;
+            
+            // Update status to show loading
+            updateStatus('🔄 Switching Show...', true);
+            
+            try {
+                // Tell server to restart stream with new date
+                const response = await fetch('/api/stream/restart', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ date: showDate })
+                });
+                
+                if (response.ok) {
+                    console.log(`Switching to show: ${showDate}`);
+                    updateStatus('🔄 Loading New Show...', true);
+                    
+                    // Wait longer for stream to restart and stabilize
+                    setTimeout(() => {
+                        // Reload player source instead of disposing entirely
+                        if (player) {
+                            player.src([{
+                                src: '/stream/output.m3u8?t=' + Date.now(),
+                                type: 'application/x-mpegURL'
+                            }]);
+                            player.load();
+                        } else {
+                            initPlayer();
+                        }
+                        updateStatus('🔴 Live Stream Active', true);
+                    }, 5000);
+                } else {
+                    throw new Error('Failed to restart stream');
+                }
+                
+            } catch (error) {
+                console.error('Failed to change show:', error);
+                updateStatus('⚠️ Error Loading Show', false);
+            }
+        }
+
+        // Update current time
+        function updateCurrentTime() {
+            const now = new Date();
+            const mtTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Denver"}));
+            document.getElementById('currentTime').textContent = mtTime.toLocaleString();
+        }
+
+        // Test stream function
+        function testStream() {
+            console.log('Testing stream...');
+            updateStatus('🔧 Testing Stream...', true);
+            
+            // First test if the stream URL is accessible
+            const streamUrl = '/stream/output.m3u8?t=' + Date.now();
+            console.log('Testing stream URL:', streamUrl);
+            
+            fetch(streamUrl)
+                .then(response => {
+                    console.log('Stream URL response:', response.status, response.statusText);
+                    if (response.ok) {
+                        return response.text();
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                })
+                .then(m3u8Content => {
+                    console.log('Stream playlist content (first 200 chars):', m3u8Content.substring(0, 200));
+                    
+                    // Now test the player
+                    if (player) {
+                        console.log('Player state:', {
+                            readyState: player.readyState(),
+                            paused: player.paused(),
+                            currentTime: player.currentTime(),
+                            duration: player.duration(),
+                            error: player.error()
+                        });
+                        
+                        // Set source and try to play
+                        player.src({
+                            src: streamUrl,
+                            type: 'application/x-mpegURL'
+                        });
+                        
+                        player.load();
+                        player.play().then(() => {
+                            console.log('Stream test successful!');
+                            updateStatus('✅ Stream Test Successful', true);
+                        }).catch(e => {
+                            console.error('Stream test failed:', e);
+                            updateStatus('❌ Stream Test Failed', false);
+                        });
+                    } else {
+                        console.log('No player found, initializing...');
+                        initPlayer();
+                    }
+                })
+                .catch(error => {
+                    console.error('Stream URL test failed:', error);
+                    updateStatus('❌ Stream URL Not Accessible', false);
+                });
+        }
+
+        // Reload player function
+        function reloadPlayer() {
+            console.log('Reloading player...');
+            updateStatus('🔄 Reloading Player...', true);
+            initPlayer();
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            initPlayer();
+            checkStatus();
+            loadLogs();
+            loadDates();
+            updateCurrentTime();
+            
+            // Set up intervals
+            statusInterval = setInterval(() => {
+                checkStatus();
+                loadLogs();
+                updateCurrentTime();
+            }, 10000);
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+            if (player) {
+                player.dispose();
+            }
+        });
+    </script>
+</body>
+</html>
