@@ -120,6 +120,17 @@ docker start mytube
 
 ### Recommended: DigitalOcean Droplet Setup
 
+**Option 1: Quick Deploy (Automated)**
+```bash
+# SSH into your fresh Ubuntu 22.04 droplet
+ssh root@YOUR_DROPLET_IP
+
+# Run the automated setup script
+curl -fsSL https://raw.githubusercontent.com/shulmeister/mytube/main/quick-deploy.sh | bash
+```
+
+**Option 2: Manual Setup (Step-by-step)**
+
 **Create a Droplet:**
 1. **Login to DigitalOcean** and create a new Droplet
 2. **Choose Image**: Ubuntu 22.04 LTS
