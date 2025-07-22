@@ -2,6 +2,7 @@
 
 # 🌊 MyTube DigitalOcean Droplet Quick Deploy Script
 # This script automates the complete setup of MyTube on a fresh Ubuntu 22.04 droplet
+# Note: Configure your stream source in the application after deployment
 
 set -e  # Exit on any error
 

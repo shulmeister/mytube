@@ -1,6 +1,6 @@
 # 🌊 Shulmeister's MyTube - Complete Setup Guide
 
-This guide will help you set up and run the Phish stream relay system on any computer. This is a self-hosted HLS stream relay that automatically pulls daily Phish shows from forbinaquarium.com and serves them through a YouTube-style interface.
+This guide will help you set up and run the Phish stream relay system on any computer. This is a self-hosted HLS stream relay that automatically pulls daily Phish shows from your configured stream source and serves them through a YouTube-style interface.
 
 ## 📋 Prerequisites
 
@@ -289,7 +289,7 @@ PORT=8080
 NODE_ENV=production
 
 # Streaming configuration  
-STREAM_SOURCE_BASE_URL=https://forbinaquarium.com/stream/
+STREAM_SOURCE_BASE_URL=https://your-stream-source.com/stream/
 FFMPEG_OPTIONS="-preset ultrafast -g 30"
 
 # Monitoring
@@ -509,8 +509,8 @@ Add additional source URLs in the configuration:
 ```javascript
 // In server.js, add backup sources
 const STREAM_SOURCES = [
-  'https://forbinaquarium.com/stream/',
-  'https://backup-source.com/stream/'
+  'https://your-primary-source.com/stream/',
+  'https://your-backup-source.com/stream/'
 ];
 ```
 
@@ -529,7 +529,7 @@ If you encounter issues:
 2. **Verify stream source** is accessible in browser
 3. **Test FFmpeg manually**:
    ```bash
-   ffmpeg -i "https://forbinaquarium.com/stream/2024-12-30.m3u8" -c copy test.m3u8
+   ffmpeg -i "https://your-stream-source.com/stream/2025-07-22.m3u8" -c copy test.m3u8
    ```
 4. **Check network connectivity** and firewall settings
 
