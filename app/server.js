@@ -176,17 +176,29 @@ app.get('/api/logs', (req, res) => {
 // API endpoint to manually restart FFmpeg
 app.post('/api/stream/restart', (req, res) => {
     const { spawn } = require('child_process');
+    const { forceDate } = req.body;
     
     try {
+        let command = ['/app/ffmpeg-launcher.sh', 'restart'];
+        
+        // If a specific date is requested, add it as an environment variable
+        let env = { ...process.env };
+        if (forceDate) {
+            env.FORCE_SHOW_DATE = forceDate;
+            console.log(`Forcing show date: ${forceDate}`);
+        }
+        
         // Execute FFmpeg restart command
-        const restart = spawn('bash', ['/app/ffmpeg-launcher.sh', 'restart'], {
+        const restart = spawn('bash', command, {
             stdio: 'inherit',
-            cwd: '/app'
+            cwd: '/app',
+            env: env
         });
         
         res.json({
             success: true,
-            message: 'FFmpeg restart initiated',
+            message: forceDate ? `FFmpeg restart initiated for show ${forceDate}` : 'FFmpeg restart initiated',
+            forceDate: forceDate || null,
             timestamp: new Date().toISOString()
         });
     } catch (error) {

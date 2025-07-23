@@ -64,10 +64,18 @@ get_fallback_date_string() {
 
 # Function to construct the stream URL with fallback
 construct_url() {
-    local date_str=$(get_date_string)
-    local url="${BASE_URL}/ph${date_str}/ph${date_str}_1080p.m3u8"
+    local date_str
     
-    echo "$(date): Mountain Time date calculated as: $date_str" >> "$LOG_FILE"
+    # Check if a specific show date is forced
+    if [ -n "$FORCE_SHOW_DATE" ]; then
+        date_str="$FORCE_SHOW_DATE"
+        echo "$(date): Using forced show date: $date_str" >> "$LOG_FILE"
+    else
+        date_str=$(get_date_string)
+        echo "$(date): Mountain Time date calculated as: $date_str" >> "$LOG_FILE"
+    fi
+    
+    local url="${BASE_URL}/ph${date_str}/ph${date_str}_1080p.m3u8"
     echo "$(date): Testing current date URL: $url" >> "$LOG_FILE"
     
     # Test if today's stream exists
@@ -78,13 +86,14 @@ construct_url() {
     fi
     
     # Known show dates for July 2025 (based on tour schedule)
+    # Jul 23: Forest Hills Stadium, New York (Night 2)
     # Jul 22: Forest Hills Stadium, New York
     # Jul 18, 19, 20: United Center, Chicago
     # Jul 15, 16: TD Pavilion at The Mann, Philadelphia  
     # Jul 11, 12, 13: North Charleston Coliseum
     # Jul 9: Schottenstein Center, Columbus
     # Jul 3, 4, 5: Folsom Field, Boulder
-    local known_show_dates=("250722" "250720" "250719" "250718" "250716" "250715" "250713" "250712" "250711" "250709" "250705" "250704" "250703")
+    local known_show_dates=("250723" "250722" "250720" "250719" "250718" "250716" "250715" "250713" "250712" "250711" "250709" "250705" "250704" "250703")
     
     echo "$(date): Current date stream not available, checking known show dates..." >> "$LOG_FILE"
     

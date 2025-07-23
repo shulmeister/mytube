@@ -543,6 +543,7 @@
 
         // Show data with current tour information
         const showsData = [
+            { date: '2025-07-23', venue: 'Forest Hills Stadium', city: 'New York', dateCode: '250723', isCurrent: false },
             { date: '2025-07-22', venue: 'Forest Hills Stadium', city: 'New York', dateCode: '250722', isCurrent: true },
             { date: '2025-07-20', venue: 'United Center', city: 'Chicago', dateCode: '250720' },
             { date: '2025-07-19', venue: 'United Center', city: 'Chicago', dateCode: '250719' },
@@ -588,12 +589,17 @@
             
             if (selectedValue === 'auto') {
                 // Use current/auto stream
+                console.log('Loading automatic/current show');
                 refreshStream();
             } else {
                 // Load specific show
                 const selectedShow = showsData.find(show => show.dateCode === selectedValue);
                 if (selectedShow) {
-                    console.log(`Loading show: ${selectedShow.date} - ${selectedShow.venue}`);
+                    console.log(`Loading show: ${selectedShow.date} - ${selectedShow.venue} (${selectedShow.city})`);
+                    
+                    // Update the current show display immediately
+                    const currentShowDisplay = `${selectedShow.date.slice(5)} - ${selectedShow.venue} (${selectedShow.city})`;
+                    document.getElementById('current-show').textContent = currentShowDisplay;
                     
                     // Force stream restart with selected show
                     fetch('/api/stream/restart', {
@@ -603,15 +609,20 @@
                     }).then(response => response.json())
                     .then(result => {
                         if (result.success) {
+                            console.log(`Successfully switched to show ${selectedValue}`);
                             setTimeout(() => {
                                 refreshStream();
                                 checkHealth();
                             }, 3000);
+                        } else {
+                            console.error('Failed to switch show:', result.error);
                         }
                     }).catch(error => {
                         console.error('Error changing show:', error);
                         refreshStream(); // Fallback to regular refresh
                     });
+                } else {
+                    console.error('Selected show not found in data');
                 }
             }
         }
