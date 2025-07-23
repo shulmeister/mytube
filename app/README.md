@@ -7,6 +7,8 @@ A complete self-hosted HLS stream relay system using FFmpeg that automatically p
 - 🔄 **Automatic Daily Stream Updates**: Constructs source URLs based on current date and your configured stream source
 - 🎥 **HLS Streaming**: FFmpeg-powered HLS segmentation and delivery  
 - 📱 **Modern Web Player**: Video.js player with live controls and status monitoring
+- 📺 **Show Selection Interface**: Dropdown to choose from available shows with current show clearly marked
+- 🎯 **Smart Show Detection**: Automatically identifies and loads the current day's show
 - ☁️ **Cloud-Ready**: Docker containerized for easy deployment
 - 🛠️ **Auto-Recovery**: Automatic FFmpeg restart on failures
 - 📊 **Health Monitoring**: Built-in health checks and status API

@@ -307,16 +307,25 @@ Edit `ffmpeg-launcher.sh` to modify:
 ## 📱 Using the Interface
 
 ### Main Features
-- **YouTube-style Player**: Clean, responsive video interface
+- **YouTube-style Player**: Clean, responsive video interface with full controls
 - **Live Stream Focus**: Automatically loads today's live stream
-- **Stream Controls**: Force restart stream, check status
-- **Mobile Responsive**: Works on phones and tablets
+- **Show Selection Dropdown**: Choose from available shows with current show clearly marked
+- **Real-time Status**: Live monitoring of stream health and connection status
+- **Mobile Responsive**: Works perfectly on phones and tablets
+
+### Interface Sections
+1. **Video Player**: Main YouTube-style video player with standard controls
+2. **Stream Status**: Shows connection status, last updated time, and segment count
+3. **Stream Info**: Displays current show, source date, format, and quality information
+4. **Show Selection**: Dropdown menu with all available shows, current show marked as "Current"
+5. **Current Time**: Local and UTC time display
 
 ### Stream Controls
 1. **Auto-detection**: Automatically loads today's stream if available
-2. **Check Stream Status**: Verify current stream availability
-3. **Restart Stream**: Forces a fresh connection if needed
-4. **Real-time Status**: Live monitoring of stream health
+2. **Show Selector**: Use dropdown to switch between different available shows
+3. **Load Show Button**: Click to switch to selected show from dropdown
+4. **Check Stream Status**: Real-time verification of stream availability
+5. **Restart Stream**: Forces a fresh connection if needed
 
 ## 🛠️ Troubleshooting
 
