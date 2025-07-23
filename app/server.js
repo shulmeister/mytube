@@ -60,6 +60,8 @@ app.use('/', express.static(path.join(__dirname, 'public'), {
             res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
             res.set('Pragma', 'no-cache');
             res.set('Expires', '0');
+            res.set('ETag', false);
+            res.set('Last-Modified', new Date().toUTCString());
         }
     }
 }));

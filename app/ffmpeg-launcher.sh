@@ -78,12 +78,13 @@ construct_url() {
     fi
     
     # Known show dates for July 2025 (based on tour schedule)
+    # Jul 22: Forest Hills Stadium, New York
     # Jul 18, 19, 20: United Center, Chicago
     # Jul 15, 16: TD Pavilion at The Mann, Philadelphia  
     # Jul 11, 12, 13: North Charleston Coliseum
     # Jul 9: Schottenstein Center, Columbus
     # Jul 3, 4, 5: Folsom Field, Boulder
-    local known_show_dates=("250720" "250719" "250718" "250716" "250715" "250713" "250712" "250711" "250709" "250705" "250704" "250703")
+    local known_show_dates=("250722" "250720" "250719" "250718" "250716" "250715" "250713" "250712" "250711" "250709" "250705" "250704" "250703")
     
     echo "$(date): Current date stream not available, checking known show dates..." >> "$LOG_FILE"
     

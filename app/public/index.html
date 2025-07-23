@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shulmeister's MyTube v2.1</title>
+    <title>Shulmeister's MyTube v2.2 - Updated</title>
     <link href="https://vjs.zencdn.net/8.5.2/video-js.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -240,6 +240,39 @@
 
         /* Removed stream selector - focusing on live stream only */
 
+        /* Show Selector Styles */
+        .show-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .show-dropdown {
+            background-color: #303030;
+            color: #ffffff;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .show-dropdown:focus {
+            border-color: #ff0000;
+        }
+
+        .show-dropdown option {
+            background-color: #303030;
+            color: #ffffff;
+        }
+
+        .action-button.small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
         /* Description Section */
         .description-section {
             background-color: #262626;
@@ -422,6 +455,10 @@
                     Stream Info
                 </div>
                 <div class="status-item">
+                    <span>Current Show</span>
+                    <span id="current-show">-</span>
+                </div>
+                <div class="status-item">
                     <span>Source Date</span>
                     <span id="stream-source">-</span>
                 </div>
@@ -432,6 +469,22 @@
                 <div class="status-item">
                     <span>Quality</span>
                     <span>1080p</span>
+                </div>
+            </div>
+
+            <!-- Show Selector -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Show Selection
+                </div>
+                <div class="show-selector">
+                    <select id="show-select" class="show-dropdown">
+                        <option value="auto">Auto - Current Show</option>
+                    </select>
+                    <button class="action-button small" onclick="changeShow()">
+                        <i class="fas fa-sync-alt"></i> Load Show
+                    </button>
                 </div>
             </div>
 
@@ -460,7 +513,7 @@
 
         // Initialize Video.js player
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('MyTube v2.1 - Initializing...');
+            console.log('MyTube v2.2 - Updated Show Selector - Initializing...');
             player = videojs('live-player', {
                 sources: [{
                     src: '/stream/output.m3u8',
@@ -476,6 +529,9 @@
                 responsive: true
             });
 
+            // Initialize show data
+            populateShowSelector();
+            
             // Start status checking
             checkHealth();
             updateTime();
@@ -484,6 +540,81 @@
             statusCheckInterval = setInterval(checkHealth, 10000); // Check every 10 seconds
             setInterval(updateTime, 1000); // Update time every second
         });
+
+        // Show data with current tour information
+        const showsData = [
+            { date: '2025-07-22', venue: 'Forest Hills Stadium', city: 'New York', dateCode: '250722', isCurrent: true },
+            { date: '2025-07-20', venue: 'United Center', city: 'Chicago', dateCode: '250720' },
+            { date: '2025-07-19', venue: 'United Center', city: 'Chicago', dateCode: '250719' },
+            { date: '2025-07-18', venue: 'United Center', city: 'Chicago', dateCode: '250718' },
+            { date: '2025-07-16', venue: 'TD Pavilion at The Mann', city: 'Philadelphia', dateCode: '250716' },
+            { date: '2025-07-15', venue: 'TD Pavilion at The Mann', city: 'Philadelphia', dateCode: '250715' },
+            { date: '2025-07-13', venue: 'North Charleston Coliseum', city: 'Charleston', dateCode: '250713' },
+            { date: '2025-07-12', venue: 'North Charleston Coliseum', city: 'Charleston', dateCode: '250712' },
+            { date: '2025-07-11', venue: 'North Charleston Coliseum', city: 'Charleston', dateCode: '250711' },
+            { date: '2025-07-09', venue: 'Schottenstein Center', city: 'Columbus', dateCode: '250709' },
+            { date: '2025-07-05', venue: 'Folsom Field', city: 'Boulder', dateCode: '250705' },
+            { date: '2025-07-04', venue: 'Folsom Field', city: 'Boulder', dateCode: '250704' },
+            { date: '2025-07-03', venue: 'Folsom Field', city: 'Boulder', dateCode: '250703' }
+        ];
+
+        function populateShowSelector() {
+            const showSelect = document.getElementById('show-select');
+            const currentShow = showsData.find(show => show.isCurrent);
+            
+            // Update current show display
+            if (currentShow) {
+                const currentShowDisplay = `${currentShow.date.slice(5)} - ${currentShow.venue} (${currentShow.city})`;
+                document.getElementById('current-show').textContent = currentShowDisplay;
+            }
+            
+            // Populate dropdown with all shows
+            showsData.forEach(show => {
+                const option = document.createElement('option');
+                option.value = show.dateCode;
+                const dateStr = show.date.slice(5); // Get MM-DD part
+                const label = `${dateStr} - ${show.venue} (${show.city})${show.isCurrent ? ' - Current' : ''}`;
+                option.textContent = label;
+                if (show.isCurrent) {
+                    option.selected = true;
+                }
+                showSelect.appendChild(option);
+            });
+        }
+
+        function changeShow() {
+            const showSelect = document.getElementById('show-select');
+            const selectedValue = showSelect.value;
+            
+            if (selectedValue === 'auto') {
+                // Use current/auto stream
+                refreshStream();
+            } else {
+                // Load specific show
+                const selectedShow = showsData.find(show => show.dateCode === selectedValue);
+                if (selectedShow) {
+                    console.log(`Loading show: ${selectedShow.date} - ${selectedShow.venue}`);
+                    
+                    // Force stream restart with selected show
+                    fetch('/api/stream/restart', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ forceDate: selectedValue })
+                    }).then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            setTimeout(() => {
+                                refreshStream();
+                                checkHealth();
+                            }, 3000);
+                        }
+                    }).catch(error => {
+                        console.error('Error changing show:', error);
+                        refreshStream(); // Fallback to regular refresh
+                    });
+                }
+            }
+        }
 
         async function checkHealth() {
             try {
@@ -626,8 +757,6 @@
                 setTimeout(refreshStream, 5000); // Auto-retry after 5 seconds
             });
         }
-
-        // Removed stream selector functionality - focusing on live stream only
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', function() {
