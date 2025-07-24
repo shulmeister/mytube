@@ -585,7 +585,7 @@
 
         async function checkHealth() {
             try {
-                const response = await fetch('/api/status');
+                const response = await fetch('http://143.198.144.51:3000/api/status');
                 const data = await response.json();
                 
                 const indicator = document.getElementById('stream-indicator');
@@ -630,7 +630,7 @@
 
         async function getStreamInfo() {
             try {
-                const response = await fetch('/api/stream/info');
+                const response = await fetch('http://143.198.144.51:3000/api/stream/info');
                 const data = await response.json();
                 
                 document.getElementById('segment-count').textContent = data.segmentCount || 0;
@@ -693,7 +693,7 @@
 
         async function restartFFmpeg() {
             try {
-                const response = await fetch('/api/stream/restart', {
+                const response = await fetch('http://143.198.144.51:3000/api/stream/restart', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -844,7 +844,7 @@
             
             for (const stream of availableStreams.slice(0, 10)) {
                 try {
-                    const response = await fetch(`/api/stream/load-date/${stream.dateStr}`, { method: 'HEAD' });
+                    const response = await fetch(`http://143.198.144.51:3000/api/stream/load-date/${stream.dateStr}`, { method: 'HEAD' });
                     const statusElement = document.getElementById(`status-${stream.dateStr}`);
                     
                     if (response.ok) {
