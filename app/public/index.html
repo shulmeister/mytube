@@ -402,20 +402,20 @@
         <!-- Video Section -->
         <div class="video-section">
             <div class="video-container">
-                <video-js
+                <video
                     id="live-player"
                     class="video-js vjs-default-skin"
                     controls
                     preload="auto"
                     autoplay
                     muted
-                    data-setup='{"fluid": true, "responsive": true}'
-                    poster="">
+                    playsinline
+                    data-setup='{"fluid": true, "responsive": true}'>
                     <p class="vjs-no-js">
                         To view this video please enable JavaScript, and consider upgrading to a web browser that
                         <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
                     </p>
-                </video-js>
+                </video>
             </div>
 
             <!-- Video Meta -->
@@ -745,13 +745,23 @@
                 const day = String(date.getDate()).padStart(2, '0');
                 const dateStr = year + month + day;
                 
+                // Get venue info for known shows
+                let venue = '';
+                if (dateStr === '250723') {
+                    venue = ' - Bethel Woods (New York)';
+                } else if (dateStr === '250722') {
+                    venue = ' - Forest Hills Stadium (New York)';
+                } else if (dateStr === '250721') {
+                    venue = ' - Forest Hills Stadium (New York)';
+                } else if (dateStr === '250720') {
+                    venue = ' - Ruoff Music Center (Indiana)';
+                }
+                
                 const displayDate = date.toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short', 
-                    day: 'numeric',
-                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
                     timeZone: 'America/Denver'
-                });
+                }) + venue;
                 
                 streams.push({
                     dateStr: dateStr,
@@ -870,9 +880,16 @@
                 if (dateStr === 'auto') {
                     // Use server's stream with cache busting
                     if (player) {
-                        player.src(`/stream/output.m3u8?t=${Date.now()}`);
+                        const streamUrl = `/stream/output.m3u8?t=${Date.now()}`;
+                        player.src(streamUrl);
                         player.load();
-                        player.play();
+                        
+                        // Force autoplay
+                        player.ready(() => {
+                            player.play().catch(e => {
+                                console.log('Autoplay blocked, user interaction required:', e);
+                            });
+                        });
                     }
                 } else {
                     // Load the selected date's stream directly with cache busting
@@ -881,7 +898,13 @@
                     if (player) {
                         player.src(streamUrl);
                         player.load();
-                        player.play();
+                        
+                        // Force autoplay
+                        player.ready(() => {
+                            player.play().catch(e => {
+                                console.log('Autoplay blocked, user interaction required:', e);
+                            });
+                        });
                     }
                     
                     // Update the stream date display
