@@ -55,14 +55,12 @@ app.use('/stream', (req, res, next) => {
 // Serve static files from public directory
 app.use('/', express.static(path.join(__dirname, 'public'), {
     setHeaders: (res, path) => {
-        // Add cache-busting for HTML files
-        if (path.endsWith('.html')) {
-            res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-            res.set('Pragma', 'no-cache');
-            res.set('Expires', '0');
-            res.set('ETag', false);
-            res.set('Last-Modified', new Date().toUTCString());
-        }
+        // Add aggressive cache-busting for ALL files
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        res.set('ETag', ''); // Disable ETags
+        res.set('Last-Modified', ''); // Disable Last-Modified
     }
 }));
 
@@ -173,32 +171,51 @@ app.get('/api/logs', (req, res) => {
     }
 });
 
+// API endpoint to change stream date
+app.post('/api/stream/change-date', express.json(), (req, res) => {
+    const { dateStr } = req.body;
+    
+    if (!dateStr || dateStr === 'auto') {
+        res.json({ 
+            success: true, 
+            message: 'Using automatic date selection',
+            dateStr: 'auto',
+            streamUrl: '/stream/output.m3u8'
+        });
+        return;
+    }
+    
+    // Validate date format (YYMMDD)
+    if (!/^\d{6}$/.test(dateStr)) {
+        res.status(400).json({
+            error: 'Invalid date format. Expected YYMMDD'
+        });
+        return;
+    }
+    
+    // Simple response - frontend will handle the stream switching
+    res.json({
+        success: true,
+        message: `Stream date set to ${dateStr}`,
+        dateStr: dateStr,
+        streamUrl: `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8`
+    });
+});
+
 // API endpoint to manually restart FFmpeg
 app.post('/api/stream/restart', (req, res) => {
     const { spawn } = require('child_process');
-    const { forceDate } = req.body;
     
     try {
-        let command = ['/app/ffmpeg-launcher.sh', 'restart'];
-        
-        // If a specific date is requested, add it as an environment variable
-        let env = { ...process.env };
-        if (forceDate) {
-            env.FORCE_SHOW_DATE = forceDate;
-            console.log(`Forcing show date: ${forceDate}`);
-        }
-        
         // Execute FFmpeg restart command
-        const restart = spawn('bash', command, {
+        const restart = spawn('bash', ['/app/ffmpeg-launcher.sh', 'restart'], {
             stdio: 'inherit',
-            cwd: '/app',
-            env: env
+            cwd: '/app'
         });
         
         res.json({
             success: true,
-            message: forceDate ? `FFmpeg restart initiated for show ${forceDate}` : 'FFmpeg restart initiated',
-            forceDate: forceDate || null,
+            message: 'FFmpeg restart initiated',
             timestamp: new Date().toISOString()
         });
     } catch (error) {
@@ -212,8 +229,23 @@ app.post('/api/stream/restart', (req, res) => {
 // API endpoint to test direct stream access
 app.get('/api/test/direct-stream', async (req, res) => {
     try {
-        const testUrl = 'https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8';
-        const response = await fetch(testUrl, { method: 'HEAD' });
+        // Get current date in Mountain Time
+        const now = new Date();
+        const mountainTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Denver"}));
+        const dateStr = mountainTime.getFullYear().toString().slice(-2) + 
+                       String(mountainTime.getMonth() + 1).padStart(2, '0') + 
+                       String(mountainTime.getDate()).padStart(2, '0');
+        
+        // Try today's stream first
+        let testUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8`;
+        let response = await fetch(testUrl, { method: 'HEAD' });
+        
+        // If today's stream doesn't exist, fall back to most recent show
+        if (!response.ok) {
+            // Try yesterday (July 22nd for now)
+            testUrl = 'https://forbinaquarium.com/Live/00/ph250722/ph250722_1080p.m3u8';
+            response = await fetch(testUrl, { method: 'HEAD' });
+        }
         
         res.json({
             url: testUrl,
@@ -221,13 +253,14 @@ app.get('/api/test/direct-stream', async (req, res) => {
             status: response.status,
             statusText: response.statusText,
             headers: Object.fromEntries(response.headers.entries()),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            fallback: !testUrl.includes(dateStr)
         });
     } catch (error) {
         res.status(500).json({
             error: 'Failed to test stream URL',
             message: error.message,
-            url: 'https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8'
+            url: testUrl
         });
     }
 });
@@ -288,7 +321,13 @@ app.get('/api/debug/html-check', (req, res) => {
 // Simple proxy endpoint to test direct streaming
 app.get('/api/test-stream', (req, res) => {
     const https = require('https');
-    const streamUrl = 'https://forbinaquarium.com/Live/00/ph250720/ph250720_1080p.m3u8';
+    // Get current date in Mountain Time
+    const now = new Date();
+    const mountainTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Denver"}));
+    const dateStr = mountainTime.getFullYear().toString().slice(-2) + 
+                   String(mountainTime.getMonth() + 1).padStart(2, '0') + 
+                   String(mountainTime.getDate()).padStart(2, '0');
+    const streamUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8`;
     
     https.get(streamUrl, (response) => {
         res.set('Content-Type', 'application/vnd.apple.mpegurl');
@@ -302,7 +341,7 @@ app.get('/api/test-stream', (req, res) => {
         
         response.on('end', () => {
             // Modify the m3u8 content to point to our proxy
-            const modifiedData = data.replace(/ph250720_(\d+)\.ts/g, '/proxy-stream/ph250720_$1.ts');
+            const modifiedData = data.replace(new RegExp(`ph${dateStr}_(\\d+)\\.ts`, 'g'), `/proxy-stream/ph${dateStr}_$1.ts`);
             res.send(modifiedData);
         });
     }).on('error', (error) => {
@@ -318,7 +357,10 @@ app.get('/api/test-stream', (req, res) => {
 app.get('/proxy-stream/:filename', (req, res) => {
     const https = require('https');
     const filename = req.params.filename;
-    const baseUrl = 'https://forbinaquarium.com/Live/00/ph250720/';
+    // Extract date from filename (e.g., ph250723_001.ts -> 250723)
+    const dateMatch = filename.match(/ph(\d{6})/);
+    const dateStr = dateMatch ? dateMatch[1] : '250723'; // fallback to today
+    const baseUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/`;
     const segmentUrl = baseUrl + filename;
     
     https.get(segmentUrl, (response) => {

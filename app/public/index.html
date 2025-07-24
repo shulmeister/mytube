@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shulmeister's MyTube v2.2 - Updated</title>
+    <title>Shulmeister's MyTube v2.1</title>
     <link href="https://vjs.zencdn.net/8.5.2/video-js.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -238,39 +238,81 @@
             50% { opacity: 0.5; }
         }
 
-        /* Removed stream selector - focusing on live stream only */
-
-        /* Show Selector Styles */
-        .show-selector {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 8px;
+        /* Stream Selector */
+        .stream-selector {
+            background-color: #262626;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
         }
 
-        .show-dropdown {
-            background-color: #303030;
+        .stream-selector select {
+            width: 100%;
+            background-color: #404040;
+            border: 1px solid #606060;
+            border-radius: 6px;
             color: #ffffff;
-            border: 1px solid #404040;
-            border-radius: 4px;
             padding: 8px 12px;
             font-size: 14px;
-            outline: none;
             cursor: pointer;
         }
 
-        .show-dropdown:focus {
+        .stream-selector select:focus {
+            outline: none;
             border-color: #ff0000;
         }
 
-        .show-dropdown option {
-            background-color: #303030;
+        .stream-selector select option {
+            background-color: #404040;
             color: #ffffff;
         }
 
-        .action-button.small {
-            padding: 6px 12px;
+        .stream-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+
+        .stream-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .stream-item:hover {
+            background-color: #404040;
+        }
+
+        .stream-item.active {
+            background-color: #ff0000;
+        }
+
+        .stream-item.unavailable {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .stream-date {
+            font-weight: 500;
+        }
+
+        .stream-status {
             font-size: 12px;
+            color: #aaaaaa;
+        }
+
+        .stream-status.available {
+            color: #00ff00;
+        }
+
+        .stream-status.unavailable {
+            color: #ff4444;
         }
 
         /* Description Section */
@@ -428,6 +470,22 @@
 
         <!-- Sidebar -->
         <div class="sidebar">
+            <!-- Stream Selector -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Select Stream Date
+                </div>
+                <div class="stream-selector">
+                    <select id="stream-date-selector" onchange="changeStreamDate()">
+                        <option value="auto">Auto (Latest Available)</option>
+                    </select>
+                </div>
+                <div class="stream-list" id="stream-list">
+                    <!-- Stream items will be populated by JavaScript -->
+                </div>
+            </div>
+
             <!-- Stream Status -->
             <div class="sidebar-section">
                 <div class="sidebar-title">
@@ -455,10 +513,6 @@
                     Stream Info
                 </div>
                 <div class="status-item">
-                    <span>Current Show</span>
-                    <span id="current-show">-</span>
-                </div>
-                <div class="status-item">
                     <span>Source Date</span>
                     <span id="stream-source">-</span>
                 </div>
@@ -469,22 +523,6 @@
                 <div class="status-item">
                     <span>Quality</span>
                     <span>1080p</span>
-                </div>
-            </div>
-
-            <!-- Show Selector -->
-            <div class="sidebar-section">
-                <div class="sidebar-title">
-                    <i class="fas fa-calendar-alt"></i>
-                    Show Selection
-                </div>
-                <div class="show-selector">
-                    <select id="show-select" class="show-dropdown">
-                        <option value="auto">Auto - Current Show</option>
-                    </select>
-                    <button class="action-button small" onclick="changeShow()">
-                        <i class="fas fa-sync-alt"></i> Load Show
-                    </button>
                 </div>
             </div>
 
@@ -513,10 +551,10 @@
 
         // Initialize Video.js player
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('MyTube v2.2 - Updated Show Selector - Initializing...');
+            console.log('MyTube v2.1 - Initializing...');
             player = videojs('live-player', {
                 sources: [{
-                    src: '/stream/output.m3u8',
+                    src: `/stream/output.m3u8?t=${Date.now()}`,
                     type: 'application/x-mpegURL'
                 }],
                 html5: {
@@ -526,106 +564,20 @@
                 },
                 liveui: true,
                 fluid: true,
-                responsive: true
+                responsive: true,
+                autoplay: true,
+                muted: true // Required for autoplay in most browsers
             });
 
-            // Initialize show data
-            populateShowSelector();
-            
             // Start status checking
             checkHealth();
             updateTime();
             updateStreamDate();
+            populateStreamSelector();
             
             statusCheckInterval = setInterval(checkHealth, 10000); // Check every 10 seconds
             setInterval(updateTime, 1000); // Update time every second
         });
-
-        // Show data with current tour information
-        const showsData = [
-            { date: '2025-07-23', venue: 'Forest Hills Stadium', city: 'New York', dateCode: '250723', isCurrent: false },
-            { date: '2025-07-22', venue: 'Forest Hills Stadium', city: 'New York', dateCode: '250722', isCurrent: true },
-            { date: '2025-07-20', venue: 'United Center', city: 'Chicago', dateCode: '250720' },
-            { date: '2025-07-19', venue: 'United Center', city: 'Chicago', dateCode: '250719' },
-            { date: '2025-07-18', venue: 'United Center', city: 'Chicago', dateCode: '250718' },
-            { date: '2025-07-16', venue: 'TD Pavilion at The Mann', city: 'Philadelphia', dateCode: '250716' },
-            { date: '2025-07-15', venue: 'TD Pavilion at The Mann', city: 'Philadelphia', dateCode: '250715' },
-            { date: '2025-07-13', venue: 'North Charleston Coliseum', city: 'Charleston', dateCode: '250713' },
-            { date: '2025-07-12', venue: 'North Charleston Coliseum', city: 'Charleston', dateCode: '250712' },
-            { date: '2025-07-11', venue: 'North Charleston Coliseum', city: 'Charleston', dateCode: '250711' },
-            { date: '2025-07-09', venue: 'Schottenstein Center', city: 'Columbus', dateCode: '250709' },
-            { date: '2025-07-05', venue: 'Folsom Field', city: 'Boulder', dateCode: '250705' },
-            { date: '2025-07-04', venue: 'Folsom Field', city: 'Boulder', dateCode: '250704' },
-            { date: '2025-07-03', venue: 'Folsom Field', city: 'Boulder', dateCode: '250703' }
-        ];
-
-        function populateShowSelector() {
-            const showSelect = document.getElementById('show-select');
-            const currentShow = showsData.find(show => show.isCurrent);
-            
-            // Update current show display
-            if (currentShow) {
-                const currentShowDisplay = `${currentShow.date.slice(5)} - ${currentShow.venue} (${currentShow.city})`;
-                document.getElementById('current-show').textContent = currentShowDisplay;
-            }
-            
-            // Populate dropdown with all shows
-            showsData.forEach(show => {
-                const option = document.createElement('option');
-                option.value = show.dateCode;
-                const dateStr = show.date.slice(5); // Get MM-DD part
-                const label = `${dateStr} - ${show.venue} (${show.city})${show.isCurrent ? ' - Current' : ''}`;
-                option.textContent = label;
-                if (show.isCurrent) {
-                    option.selected = true;
-                }
-                showSelect.appendChild(option);
-            });
-        }
-
-        function changeShow() {
-            const showSelect = document.getElementById('show-select');
-            const selectedValue = showSelect.value;
-            
-            if (selectedValue === 'auto') {
-                // Use current/auto stream
-                console.log('Loading automatic/current show');
-                refreshStream();
-            } else {
-                // Load specific show
-                const selectedShow = showsData.find(show => show.dateCode === selectedValue);
-                if (selectedShow) {
-                    console.log(`Loading show: ${selectedShow.date} - ${selectedShow.venue} (${selectedShow.city})`);
-                    
-                    // Update the current show display immediately
-                    const currentShowDisplay = `${selectedShow.date.slice(5)} - ${selectedShow.venue} (${selectedShow.city})`;
-                    document.getElementById('current-show').textContent = currentShowDisplay;
-                    
-                    // Force stream restart with selected show
-                    fetch('/api/stream/restart', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ forceDate: selectedValue })
-                    }).then(response => response.json())
-                    .then(result => {
-                        if (result.success) {
-                            console.log(`Successfully switched to show ${selectedValue}`);
-                            setTimeout(() => {
-                                refreshStream();
-                                checkHealth();
-                            }, 3000);
-                        } else {
-                            console.error('Failed to switch show:', result.error);
-                        }
-                    }).catch(error => {
-                        console.error('Error changing show:', error);
-                        refreshStream(); // Fallback to regular refresh
-                    });
-                } else {
-                    console.error('Selected show not found in data');
-                }
-            }
-        }
 
         async function checkHealth() {
             try {
@@ -767,6 +719,181 @@
                 console.error('Player error:', player.error());
                 setTimeout(refreshStream, 5000); // Auto-retry after 5 seconds
             });
+        }
+
+        // Stream Selector Functions
+        let currentStreamDate = 'auto';
+        let availableStreams = [];
+
+        function populateStreamSelector() {
+            console.log('Populating stream selector...');
+            // Generate list of potential stream dates (last 30 days)
+            const selector = document.getElementById('stream-date-selector');
+            const streamList = document.getElementById('stream-list');
+            
+            // Use Mountain Time instead of UTC/local time
+            const today = new Date();
+            const mountainToday = new Date(today.toLocaleString("en-US", {timeZone: "America/Denver"}));
+            const streams = [];
+            
+            // Generate dates for the last 30 days in Mountain Time
+            for (let i = 0; i < 30; i++) {
+                const date = new Date(mountainToday);
+                date.setDate(date.getDate() - i);
+                
+                const year = String(date.getFullYear()).slice(-2);
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const dateStr = year + month + day;
+                
+                const displayDate = date.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric',
+                    timeZone: 'America/Denver'
+                });
+                
+                streams.push({
+                    dateStr: dateStr,
+                    displayDate: displayDate,
+                    date: date,
+                    url: `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8`
+                });
+            }
+            
+            availableStreams = streams;
+            
+            // Populate dropdown
+            streams.forEach(stream => {
+                const option = document.createElement('option');
+                option.value = stream.dateStr;
+                option.textContent = stream.displayDate;
+                selector.appendChild(option);
+            });
+            
+            // Populate stream list
+            updateStreamList();
+            
+            // Check availability of recent streams
+            checkStreamAvailability();
+        }
+
+        async function updateStreamList() {
+            const streamList = document.getElementById('stream-list');
+            streamList.innerHTML = '';
+            
+            availableStreams.slice(0, 10).forEach(stream => {
+                const item = document.createElement('div');
+                item.className = 'stream-item';
+                if (currentStreamDate === stream.dateStr) {
+                    item.classList.add('active');
+                }
+                
+                item.innerHTML = `
+                    <div class="stream-date">${stream.displayDate}</div>
+                    <div class="stream-status" id="status-${stream.dateStr}">Checking...</div>
+                `;
+                
+                item.onclick = () => selectStream(stream.dateStr);
+                streamList.appendChild(item);
+            });
+        }
+
+        async function checkStreamAvailability() {
+            // Check availability of first 10 streams
+            const results = [];
+            
+            for (const stream of availableStreams.slice(0, 10)) {
+                try {
+                    const response = await fetch(stream.url, { method: 'HEAD' });
+                    const statusElement = document.getElementById(`status-${stream.dateStr}`);
+                    
+                    if (response.ok) {
+                        statusElement.textContent = 'Available';
+                        statusElement.className = 'stream-status available';
+                        results.push({ date: stream.dateStr, available: true });
+                    } else {
+                        statusElement.textContent = 'Unavailable';
+                        statusElement.className = 'stream-status unavailable';
+                        const item = statusElement.closest('.stream-item');
+                        item.classList.add('unavailable');
+                        results.push({ date: stream.dateStr, available: false });
+                    }
+                } catch (error) {
+                    const statusElement = document.getElementById(`status-${stream.dateStr}`);
+                    statusElement.textContent = 'Unavailable';
+                    statusElement.className = 'stream-status unavailable';
+                    const item = statusElement.closest('.stream-item');
+                    item.classList.add('unavailable');
+                    results.push({ date: stream.dateStr, available: false });
+                }
+                
+                // Small delay to avoid overwhelming the server
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // Log the pattern for debugging
+            const availableDates = results.filter(r => r.available).map(r => r.date);
+            console.log('Available stream dates:', availableDates);
+            
+            // If we found available streams, highlight the most recent one
+            if (availableDates.length > 0) {
+                const mostRecent = availableDates[0]; // First in array is most recent
+                console.log('Most recent available stream:', mostRecent);
+            }
+        }
+
+        function changeStreamDate() {
+            const selector = document.getElementById('stream-date-selector');
+            selectStream(selector.value);
+        }
+
+        async function selectStream(dateStr) {
+            currentStreamDate = dateStr;
+            
+            // Update selector
+            document.getElementById('stream-date-selector').value = dateStr;
+            
+            // Update active item in list
+            document.querySelectorAll('.stream-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const activeItem = document.querySelector(`[onclick*="${dateStr}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+            
+            try {
+                if (dateStr === 'auto') {
+                    // Use server's stream with cache busting
+                    if (player) {
+                        player.src(`/stream/output.m3u8?t=${Date.now()}`);
+                        player.load();
+                        player.play();
+                    }
+                } else {
+                    // Load the selected date's stream directly with cache busting
+                    const streamUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8?t=${Date.now()}`;
+                    
+                    if (player) {
+                        player.src(streamUrl);
+                        player.load();
+                        player.play();
+                    }
+                    
+                    // Update the stream date display
+                    const stream = availableStreams.find(s => s.dateStr === dateStr);
+                    const displayDate = stream ? stream.displayDate : dateStr;
+                    document.getElementById('stream-date').textContent = displayDate;
+                }
+                
+                console.log(`Stream switched to: ${dateStr}`);
+                
+            } catch (error) {
+                console.error('Error switching stream:', error);
+            }
         }
 
         // Cleanup on page unload
