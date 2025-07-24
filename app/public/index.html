@@ -914,6 +914,9 @@
                     streamUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8?t=${Date.now()}`;
                     console.log(`🎬 Loading DATE stream: ${streamUrl}`);
                     
+                    // DEBUGGING: Show user exactly what URL is being loaded
+                    alert(`🎯 SELECTING STREAM FOR: ${dateStr}\n\nURL Generated: ${streamUrl}\n\nThis should load ${dateStr} show, NOT July 23!`);
+                    
                     // Update the stream date display to match selection
                     const stream = availableStreams.find(s => s.dateStr === dateStr);
                     const displayDate = stream ? stream.displayDate : dateStr;
