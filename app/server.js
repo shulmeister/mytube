@@ -12,13 +12,16 @@ app.use(express.json());
 
 // Security middleware
 app.use(helmet({
+    hsts: false, // Disable HSTS
+    crossOriginOpenerPolicy: false, // Disable COOP
+    crossOriginEmbedderPolicy: false, // Disable COEP
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
             mediaSrc: ["'self'", "blob:", "data:"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net", "https://cdnjs.cloudflare.com"],
-            connectSrc: ["'self'"],
+            connectSrc: ["'self'", "http://143.198.144.51:3000"], // Allow connections to self
             workerSrc: ["'self'", "blob:"]
         }
     }
@@ -465,9 +468,10 @@ app.use((error, req, res, next) => {
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
+    const IP_ADDRESS = '143.198.144.51';
     console.log(`🌊 Stream relay server running on port ${PORT}`);
-    console.log(`📺 Stream available at: http://localhost:${PORT}/stream/output.m3u8`);
-    console.log(`🌐 Web player at: http://localhost:${PORT}`);
+    console.log(`📺 Stream available at: http://${IP_ADDRESS}:${PORT}/stream/output.m3u8`);
+    console.log(`🌐 Web player at: http://${IP_ADDRESS}:${PORT}`);
 });
 
 // Graceful shutdown
