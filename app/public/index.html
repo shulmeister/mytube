@@ -407,6 +407,8 @@
                     class="video-js vjs-default-skin"
                     controls
                     preload="auto"
+                    autoplay
+                    muted
                     data-setup='{"fluid": true, "responsive": true}'
                     poster="">
                     <p class="vjs-no-js">
@@ -553,10 +555,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('MyTube v2.1 - Initializing...');
             player = videojs('live-player', {
-                sources: [{
-                    src: `/stream/output.m3u8?t=${Date.now()}`,
-                    type: 'application/x-mpegURL'
-                }],
+                sources: [], // Start with no source - selector will control what plays
                 html5: {
                     hls: {
                         overrideNative: true
@@ -764,6 +763,9 @@
             
             availableStreams = streams;
             
+            // Clear existing options except the first one
+            selector.innerHTML = '<option value="auto">Auto (Latest Available)</option>';
+            
             // Populate dropdown
             streams.forEach(stream => {
                 const option = document.createElement('option');
@@ -771,6 +773,11 @@
                 option.textContent = stream.displayDate;
                 selector.appendChild(option);
             });
+            
+            // Don't automatically select anything - let user choose or stay on "Auto"
+            // The selector starts on "Auto" and will load the server's stream
+            currentStreamDate = 'auto';
+            selectStream('auto');
             
             // Populate stream list
             updateStreamList();
@@ -836,12 +843,6 @@
             // Log the pattern for debugging
             const availableDates = results.filter(r => r.available).map(r => r.date);
             console.log('Available stream dates:', availableDates);
-            
-            // If we found available streams, highlight the most recent one
-            if (availableDates.length > 0) {
-                const mostRecent = availableDates[0]; // First in array is most recent
-                console.log('Most recent available stream:', mostRecent);
-            }
         }
 
         function changeStreamDate() {
