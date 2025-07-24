@@ -230,21 +230,69 @@ app.post('/api/stream/restart', (req, res) => {
     }
 });
 
-// API endpoint to load stream by date (masks external URLs)
+// New endpoint to proxy the .ts video segments
+app.get('/api/stream/proxy/:dateStr/:segmentFile', (req, res) => {
+    const { dateStr, segmentFile } = req.params;
+    const https = require('https');
+
+    // Basic validation
+    if (!/^\d{6}$/.test(dateStr) || !segmentFile.endsWith('.ts')) {
+        return res.status(400).send('Invalid request');
+    }
+
+    const segmentUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/${segmentFile}`;
+
+    const proxyRequest = https.get(segmentUrl, (proxyResponse) => {
+        if (proxyResponse.statusCode >= 400) {
+            res.status(proxyResponse.statusCode).end();
+            return;
+        }
+        res.writeHead(proxyResponse.statusCode, proxyResponse.headers);
+        proxyResponse.pipe(res, { end: true });
+    });
+
+    proxyRequest.on('error', (err) => {
+        console.error(`Segment proxy error for ${segmentUrl}:`, err);
+        res.status(502).send('Bad Gateway');
+    });
+});
+
+// API endpoint to load stream by date (masks external URLs by proxying)
 app.get('/api/stream/load-date/:dateStr', (req, res) => {
     const { dateStr } = req.params;
+    const https = require('https');
     
-    // Validate date format (YYMMDD)
     if (!/^\d{6}$/.test(dateStr)) {
-        res.status(400).json({
-            error: 'Invalid date format. Expected YYMMDD'
-        });
-        return;
+        return res.status(400).json({ error: 'Invalid date format. Expected YYMMDD' });
     }
     
-    // Redirect to the external stream URL
     const streamUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8`;
-    res.redirect(streamUrl);
+
+    https.get(streamUrl, (response) => {
+        if (response.statusCode !== 200) {
+            return res.status(response.statusCode).send(`Failed to fetch manifest: ${response.statusCode}`);
+        }
+
+        let manifestData = '';
+        response.on('data', (chunk) => {
+            manifestData += chunk;
+        });
+        
+        response.on('end', () => {
+            // Rewrite segment URLs to go through our proxy
+            const rewrittenManifest = manifestData.replace(/^(ph.*\.ts)$/gm, `/api/stream/proxy/${dateStr}/$1`);
+            
+            res.set('Content-Type', 'application/vnd.apple.mpegurl');
+            res.send(rewrittenManifest);
+        });
+
+    }).on('error', (error) => {
+        console.error(`Manifest fetch error for ${streamUrl}:`, error);
+        res.status(502).json({
+            error: 'Failed to fetch stream manifest',
+            message: error.message
+        });
+    });
 });
 
 // API endpoint to test direct stream access
