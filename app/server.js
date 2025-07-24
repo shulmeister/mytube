@@ -226,6 +226,23 @@ app.post('/api/stream/restart', (req, res) => {
     }
 });
 
+// API endpoint to load stream by date (masks external URLs)
+app.get('/api/stream/load-date/:dateStr', (req, res) => {
+    const { dateStr } = req.params;
+    
+    // Validate date format (YYMMDD)
+    if (!/^\d{6}$/.test(dateStr)) {
+        res.status(400).json({
+            error: 'Invalid date format. Expected YYMMDD'
+        });
+        return;
+    }
+    
+    // Redirect to the external stream URL
+    const streamUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8`;
+    res.redirect(streamUrl);
+});
+
 // API endpoint to test direct stream access
 app.get('/api/test/direct-stream', async (req, res) => {
     try {

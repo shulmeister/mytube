@@ -753,7 +753,7 @@
                 // Get venue info for known shows
                 let venue = '';
                 if (dateStr === '250723') {
-                    venue = ' - Bethel Woods (New York)';
+                    venue = ' - Forest Hills Stadium (New York)';
                 } else if (dateStr === '250722') {
                     venue = ' - Forest Hills Stadium (New York)';
                 } else if (dateStr === '250721') {
@@ -783,8 +783,7 @@
                 streams.push({
                     dateStr: dateStr,
                     displayDate: displayDate,
-                    date: date,
-                    url: `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8`
+                    date: date
                 });
             }
             
@@ -840,12 +839,12 @@
         }
 
         async function checkStreamAvailability() {
-            // Check availability of first 10 streams
+            // Check availability of first 10 streams via server API
             const results = [];
             
             for (const stream of availableStreams.slice(0, 10)) {
                 try {
-                    const response = await fetch(stream.url, { method: 'HEAD' });
+                    const response = await fetch(`/api/stream/load-date/${stream.dateStr}`, { method: 'HEAD' });
                     const statusElement = document.getElementById(`status-${stream.dateStr}`);
                     
                     if (response.ok) {
@@ -879,6 +878,7 @@
 
         function changeStreamDate() {
             const selector = document.getElementById('stream-date-selector');
+            console.log('🎯 Dropdown value:', selector.value);
             selectStream(selector.value);
         }
 
@@ -910,12 +910,9 @@
                     streamUrl = `/stream/output.m3u8?t=${Date.now()}`;
                     console.log(`🔄 Loading AUTO stream: ${streamUrl}`);
                 } else {
-                    // Load the selected date's stream directly
-                    streamUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8?t=${Date.now()}`;
-                    console.log(`🎬 Loading DATE stream: ${streamUrl}`);
-                    
-                    // DEBUGGING: Show user exactly what URL is being loaded
-                    alert(`🎯 SELECTING STREAM FOR: ${dateStr}\n\nURL Generated: ${streamUrl}\n\nThis should load ${dateStr} show, NOT July 23!`);
+                    // Load the selected date's stream via server API (masks external URLs)
+                    streamUrl = `/api/stream/load-date/${dateStr}?t=${Date.now()}`;
+                    console.log(`🎬 Loading DATE stream via API: ${streamUrl}`);
                     
                     // Update the stream date display to match selection
                     const stream = availableStreams.find(s => s.dateStr === dateStr);
