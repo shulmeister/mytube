@@ -568,14 +568,19 @@
                 muted: true // Required for autoplay in most browsers
             });
 
-            // Start status checking
-            checkHealth();
-            updateTime();
-            updateStreamDate();
-            populateStreamSelector();
-            
-            statusCheckInterval = setInterval(checkHealth, 10000); // Check every 10 seconds
-            setInterval(updateTime, 1000); // Update time every second
+            // Wait for player to be ready, then populate selector and load default stream
+            player.ready(() => {
+                console.log('Player ready, initializing selector...');
+                populateStreamSelector();
+                
+                // Start status checking
+                checkHealth();
+                updateTime();
+                updateStreamDate();
+                
+                statusCheckInterval = setInterval(checkHealth, 10000); // Check every 10 seconds
+                setInterval(updateTime, 1000); // Update time every second
+            });
         });
 
         async function checkHealth() {
@@ -755,6 +760,18 @@
                     venue = ' - Forest Hills Stadium (New York)';
                 } else if (dateStr === '250720') {
                     venue = ' - Ruoff Music Center (Indiana)';
+                } else if (dateStr === '250719') {
+                    venue = ' - United Center (Chicago)';
+                } else if (dateStr === '250718') {
+                    venue = ' - United Center (Chicago)';
+                } else if (dateStr === '250716') {
+                    venue = ' - TD Pavilion at The Mann (Philadelphia)';
+                } else if (dateStr === '250715') {
+                    venue = ' - TD Pavilion at The Mann (Philadelphia)';
+                } else if (dateStr === '250713') {
+                    venue = ' - North Charleston Coliseum (Charleston)';
+                } else if (dateStr === '250712') {
+                    venue = ' - North Charleston Coliseum (Charleston)';
                 }
                 
                 const displayDate = date.toLocaleDateString('en-US', {
@@ -784,13 +801,18 @@
                 selector.appendChild(option);
             });
             
-            // Don't automatically select anything - let user choose or stay on "Auto"
-            // The selector starts on "Auto" and will load the server's stream
-            currentStreamDate = 'auto';
-            selectStream('auto');
+            // Don't automatically select anything initially - let user choose
+            // Start with July 23 (most recent show) as the default
+            currentStreamDate = '250723';
+            
+            // Set the selector to July 23
+            selector.value = '250723';
             
             // Populate stream list
             updateStreamList();
+            
+            // Load July 23 as the initial stream
+            selectStream('250723');
             
             // Check availability of recent streams
             checkStreamAvailability();
@@ -861,10 +883,13 @@
         }
 
         async function selectStream(dateStr) {
+            console.log(`🎯 selectStream called with: ${dateStr}`);
             currentStreamDate = dateStr;
             
-            // Update selector
-            document.getElementById('stream-date-selector').value = dateStr;
+            // Update selector dropdown to match what we're actually loading
+            const selector = document.getElementById('stream-date-selector');
+            selector.value = dateStr;
+            console.log(`📺 Updated selector to: ${dateStr}`);
             
             // Update active item in list
             document.querySelectorAll('.stream-item').forEach(item => {
@@ -874,49 +899,55 @@
             const activeItem = document.querySelector(`[onclick*="${dateStr}"]`);
             if (activeItem) {
                 activeItem.classList.add('active');
+                console.log(`✅ Set active item for: ${dateStr}`);
             }
             
             try {
+                let streamUrl;
+                
                 if (dateStr === 'auto') {
-                    // Use server's stream with cache busting
-                    if (player) {
-                        const streamUrl = `/stream/output.m3u8?t=${Date.now()}`;
-                        player.src(streamUrl);
-                        player.load();
-                        
-                        // Force autoplay
-                        player.ready(() => {
-                            player.play().catch(e => {
-                                console.log('Autoplay blocked, user interaction required:', e);
-                            });
-                        });
-                    }
+                    // Use server's stream
+                    streamUrl = `/stream/output.m3u8?t=${Date.now()}`;
+                    console.log(`🔄 Loading AUTO stream: ${streamUrl}`);
                 } else {
-                    // Load the selected date's stream directly with cache busting
-                    const streamUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8?t=${Date.now()}`;
+                    // Load the selected date's stream directly
+                    streamUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8?t=${Date.now()}`;
+                    console.log(`🎬 Loading DATE stream: ${streamUrl}`);
                     
-                    if (player) {
-                        player.src(streamUrl);
-                        player.load();
-                        
-                        // Force autoplay
-                        player.ready(() => {
-                            player.play().catch(e => {
-                                console.log('Autoplay blocked, user interaction required:', e);
-                            });
-                        });
-                    }
-                    
-                    // Update the stream date display
+                    // Update the stream date display to match selection
                     const stream = availableStreams.find(s => s.dateStr === dateStr);
                     const displayDate = stream ? stream.displayDate : dateStr;
                     document.getElementById('stream-date').textContent = displayDate;
+                    console.log(`📅 Updated display date to: ${displayDate}`);
                 }
                 
-                console.log(`Stream switched to: ${dateStr}`);
+                // Actually load the stream
+                if (player) {
+                    console.log(`🎥 Setting player source to: ${streamUrl}`);
+                    player.src({
+                        src: streamUrl,
+                        type: 'application/x-mpegURL'
+                    });
+                    
+                    player.load();
+                    console.log(`⏳ Player load initiated`);
+                    
+                    // Force play after a short delay to ensure load is complete
+                    setTimeout(() => {
+                        player.play().then(() => {
+                            console.log(`▶️ Autoplay successful for: ${dateStr}`);
+                        }).catch(e => {
+                            console.log(`❌ Autoplay blocked for: ${dateStr}`, e);
+                        });
+                    }, 1000);
+                } else {
+                    console.error('❌ Player not available');
+                }
+                
+                console.log(`✅ Stream switched to: ${dateStr}`);
                 
             } catch (error) {
-                console.error('Error switching stream:', error);
+                console.error('❌ Error switching stream:', error);
             }
         }
 
