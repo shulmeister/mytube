@@ -911,7 +911,7 @@
                     console.log(`🔄 Loading AUTO stream: ${streamUrl}`);
                 } else {
                     // Load the selected date's stream via server API (masks external URLs)
-                    streamUrl = `/api/stream/load-date/${dateStr}?t=${Date.now()}`;
+                    streamUrl = `http://143.198.144.51:3000/api/stream/load-date/${dateStr}?t=${Date.now()}`;
                     console.log(`🎬 Loading DATE stream via API: ${streamUrl}`);
                     
                     // Update the stream date display to match selection
