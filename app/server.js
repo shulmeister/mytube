@@ -17,8 +17,9 @@ app.use(helmet({
             defaultSrc: ["'self'"],
             mediaSrc: ["'self'", "blob:", "data:"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net"],
-            connectSrc: ["'self'"]
+            styleSrc: ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net", "https://cdnjs.cloudflare.com"],
+            connectSrc: ["'self'"],
+            workerSrc: ["'self'", "blob:"]
         }
     }
 }));
