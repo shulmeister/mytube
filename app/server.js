@@ -98,6 +98,47 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Auto-detect current stream endpoint
+app.get('/api/stream/current', async (req, res) => {
+    const today = new Date();
+    const mountainTime = new Date(today.toLocaleString("en-US", {timeZone: "America/Denver"}));
+    
+    // Try today first, then yesterday
+    const dates = [];
+    for (let i = 0; i < 2; i++) {
+        const testDate = new Date(mountainTime);
+        testDate.setDate(testDate.getDate() - i);
+        const dateStr = testDate.getFullYear().toString().slice(-2) + 
+                       String(testDate.getMonth() + 1).padStart(2, '0') + 
+                       String(testDate.getDate()).padStart(2, '0');
+        dates.push(dateStr);
+    }
+    
+    // Test each date to find an available stream
+    for (const dateStr of dates) {
+        try {
+            const testUrl = `${STREAM_BASE_URL}/ph${dateStr}/ph${dateStr}_1080p.m3u8`;
+            const testResponse = await fetch(testUrl, { method: 'HEAD' });
+            if (testResponse.ok) {
+                return res.json({
+                    dateStr,
+                    streamUrl: `/api/stream/load-date/${dateStr}`,
+                    date: `20${dateStr.slice(0,2)}-${dateStr.slice(2,4)}-${dateStr.slice(4,6)}`,
+                    available: true
+                });
+            }
+        } catch (error) {
+            console.log(`Stream test failed for ${dateStr}:`, error.message);
+        }
+    }
+    
+    // No streams available
+    res.status(404).json({ 
+        error: 'No streams currently available',
+        available: false 
+    });
+});
+
 app.get('/api/shows', (req, res) => {
     const showsPath = path.join(__dirname, 'shows.json');
     fs.readFile(showsPath, 'utf8', (err, data) => {

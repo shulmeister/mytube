@@ -15,11 +15,9 @@ yarn-error.log*
 stream/*.ts
 stream/*.m3u8
 
-# Environment files (contains private stream source URLs)
+# Environment files
 .env
 .env.local
-.env.production
-config/private.js
 .env.development.local
 .env.test.local
 .env.production.local
