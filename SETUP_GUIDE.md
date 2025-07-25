@@ -160,61 +160,39 @@ ffmpeg -version
 
 **Deploy the Application:**
 ```bash
-# Clone the repository
-git clone https://github.com/shulmeister/mytube.git
-cd mytube/app
+# Clone the repository if you haven't already
+# git clone https://github.com/shulmeister/mytube.git /var/www/mytube
+cd /var/www/mytube/app
 
 # Install dependencies
 npm install
-
-# Make scripts executable
-chmod +x ffmpeg-launcher.sh start.sh deploy.sh monitor.sh
-
-# Create logs directory
-mkdir -p logs
-
-# Test run (should work on port 8080)
-npm start
 ```
 
-**Setup as System Service (Production):**
+**Run the Application (Manual for Debugging):**
 ```bash
-# Create systemd service file
-sudo tee /etc/systemd/system/mytube.service > /dev/null <<EOF
-[Unit]
-Description=MyTube Stream Relay
-After=network.target
+# Kill any existing process on port 3000 and start the server
+kill $(lsof -t -i:3000) || true && sleep 2 && nohup node server.js > server.log 2>&1 &
 
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/root/mytube/app
-ExecStart=/usr/bin/npm start
-Restart=always
-RestartSec=5
-Environment=NODE_ENV=production
-Environment=PORT=8080
+# To view logs
+tail -f server.log
+```
 
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Enable and start the service
-sudo systemctl enable mytube
-sudo systemctl start mytube
-sudo systemctl status mytube
+**Update from GitHub (Standard Deployment Step):**
+```bash
+# Go to the project directory, pull the latest changes, and restart the app
+cd /var/www/mytube && git fetch origin && git reset --hard origin/main && git pull origin main && cd app && kill $(lsof -t -i:3000) || true && sleep 2 && nohup node server.js > server.log 2>&1 &
 ```
 
 **Setup Nginx Reverse Proxy:**
 ```bash
-# Create Nginx configuration
+# This configuration will take traffic from port 80 and forward it to your app on port 3000
 sudo tee /etc/nginx/sites-available/mytube > /dev/null <<EOF
 server {
     listen 80;
-    server_name YOUR_DROPLET_IP;  # Replace with your domain if you have one
+    server_name 143.198.144.51; # Use your droplet's IP address
 
     location / {
-        proxy_pass http://localhost:8080;
+        proxy_pass http://localhost:3000; # Forward to port 3000
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -224,23 +202,13 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
     }
-
-    # Serve HLS segments directly
-    location /stream/ {
-        proxy_pass http://localhost:8080/stream/;
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_cache off;
-        add_header Cache-Control no-cache;
-        add_header Access-Control-Allow-Origin *;
-    }
 }
 EOF
 
 # Enable the site
 sudo ln -s /etc/nginx/sites-available/mytube /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
+# Test Nginx configuration and reload
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
 **Configure Firewall:**
