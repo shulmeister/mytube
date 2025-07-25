@@ -31,16 +31,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Endpoint to load and proxy the HLS manifest (.m3u8 file)
 app.get('/api/stream/load-date/:dateStr', async (req, res) => {
     const { dateStr } = req.params;
-    const manifestUrl = `https://nugs.net/api/v2/public/recordings/media-url/showdate/${dateStr}`;
+    const hlsUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8`;
 
     try {
-        const response = await fetch(manifestUrl);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch manifest URL, status: ${response.status}`);
-        }
-        const data = await response.json();
-        const hlsUrl = data.response.mediaUrl;
-
         const hlsResponse = await fetch(hlsUrl);
         if (!hlsResponse.ok) {
             throw new Error(`Failed to fetch HLS manifest, status: ${hlsResponse.status}`);
@@ -71,8 +64,7 @@ app.get('/api/stream/load-date/:dateStr', async (req, res) => {
 // Endpoint to proxy the individual HLS video segments (.ts files)
 app.get('/api/stream/proxy/:dateStr/:segmentFile', async (req, res) => {
     const { dateStr, segmentFile } = req.params;
-    // The base URL might need to be dynamically determined or configured
-    const segmentBaseUrl = `https://d12m2s96b7v25s.cloudfront.net/v1/hls/${dateStr}/`;
+    const segmentBaseUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/`;
     const externalSegmentUrl = segmentBaseUrl + decodeURIComponent(segmentFile);
 
     try {
