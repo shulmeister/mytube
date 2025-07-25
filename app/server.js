@@ -14,21 +14,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // 2. Security Middleware (Helmet)
-// Re-enabled with a specific, permissive policy to allow video player and HLS proxy to work.
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-            "script-src": ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net"],
-            "style-src": ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net", "https://cdnjs.cloudflare.com"],
-            "connect-src": ["'self'"], // Allow connections to self
-            "worker-src": ["'self'", "blob:"], // Allow blob workers for video.js
-            "img-src": ["'self'", "data:"],
-        },
-    },
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-    crossOriginEmbedderPolicy: false, // Setting this to false is crucial
-}));
+app.use(helmet());
 
 
 // 3. CORS Configuration
