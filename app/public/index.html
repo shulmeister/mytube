@@ -550,415 +550,195 @@
     <script>
         let player;
         let statusCheckInterval;
+        let availableShows = [];
 
-        // Initialize Video.js player
+        // --- Constants ---
+        const API_BASE_URL = ''; // Use relative paths
+
+        // --- Initialization ---
         document.addEventListener('DOMContentLoaded', function() {
             console.log('MyTube v2.1 - Initializing...');
+            
             player = videojs('live-player', {
-                sources: [], // Start with no source - selector will control what plays
-                html5: {
-                    hls: {
-                        overrideNative: true
-                    }
-                },
+                html5: { hls: { overrideNative: true } },
                 liveui: true,
                 fluid: true,
                 responsive: true,
                 autoplay: true,
-                muted: true // Required for autoplay in most browsers
+                muted: true
             });
 
-            // Wait for player to be ready, then populate selector and load default stream
-            player.ready(() => {
-                console.log('Player ready, initializing selector...');
-                populateStreamSelector();
+            player.ready(async () => {
+                console.log('Player ready.');
+                await initializePage();
                 
-                // Start status checking
-                checkHealth();
-                updateTime();
-                updateStreamDate();
-                
-                statusCheckInterval = setInterval(checkHealth, 10000); // Check every 10 seconds
-                setInterval(updateTime, 1000); // Update time every second
+                statusCheckInterval = setInterval(checkHealth, 15000);
+                setInterval(updateTime, 1000);
+            });
+
+            player.on('error', function() {
+                console.error('Player error:', player.error());
+                const statusEl = document.getElementById('stream-status');
+                statusEl.textContent = 'Playback Error';
+                // Consider a more robust retry mechanism if needed
             });
         });
 
-        async function checkHealth() {
+        async function initializePage() {
             try {
-                const response = await fetch('http://143.198.144.51:3000/api/status');
+                await fetchShows();
+                populateStreamSelector();
+                checkHealth();
+                updateTime();
+            } catch (error) {
+                console.error("Initialization failed:", error);
+                const statusEl = document.getElementById('stream-status');
+                statusEl.textContent = 'Init Failed';
+            }
+        }
+
+        // --- Data Fetching & API Calls ---
+        async function fetchShows() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/shows`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                availableShows = await response.json();
+                console.log('Fetched shows:', availableShows);
+            } catch (error) {
+                console.error('Failed to fetch shows:', error);
+                availableShows = []; // Ensure it's an empty array on failure
+            }
+        }
+
+        async function checkHealth() {
+            const indicator = document.getElementById('stream-indicator');
+            const statusEl = document.getElementById('stream-status');
+            const liveBadge = document.getElementById('live-badge');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/health`);
+                if (!response.ok) throw new Error('Health check response not OK');
                 const data = await response.json();
-                
-                const indicator = document.getElementById('stream-indicator');
-                const status = document.getElementById('stream-status');
-                const lastUpdated = document.getElementById('last-updated');
-                const liveBadge = document.getElementById('live-badge');
-                
-                if (data.status === 'ok' && data.stream.available) {
-                    indicator.className = 'status-indicator online';
-                    if (data.stream.isRecent) {
-                        status.textContent = 'Live';
-                        liveBadge.textContent = 'LIVE';
-                        liveBadge.className = 'live-badge';
-                    } else {
-                        status.textContent = 'Available';
-                        liveBadge.textContent = 'OFFLINE';
-                        liveBadge.className = 'live-badge offline';
-                    }
-                    lastUpdated.textContent = new Date(data.stream.lastUpdated).toLocaleTimeString();
-                } else {
-                    indicator.className = 'status-indicator offline';
-                    status.textContent = 'Unavailable';
-                    lastUpdated.textContent = 'No data';
-                    liveBadge.textContent = 'OFFLINE';
-                    liveBadge.className = 'live-badge offline';
-                }
-                
-                // Get additional stream info
-                getStreamInfo();
+
+                indicator.className = 'status-indicator online';
+                statusEl.textContent = 'Online';
+                liveBadge.textContent = 'ONLINE';
+                liveBadge.className = 'live-badge';
+                document.getElementById('last-updated').textContent = new Date(data.timestamp).toLocaleTimeString();
+
             } catch (error) {
                 console.error('Health check failed:', error);
-                const indicator = document.getElementById('stream-indicator');
-                const status = document.getElementById('stream-status');
-                const liveBadge = document.getElementById('live-badge');
-                
                 indicator.className = 'status-indicator offline';
-                status.textContent = 'Error';
+                statusEl.textContent = 'Error';
                 liveBadge.textContent = 'ERROR';
                 liveBadge.className = 'live-badge offline';
             }
         }
 
-        async function getStreamInfo() {
-            try {
-                const response = await fetch('http://143.198.144.51:3000/api/stream/info');
-                const data = await response.json();
-                
-                document.getElementById('segment-count').textContent = data.segmentCount || 0;
-                
-                // Generate current expected source URL using Mountain Time
-                const now = new Date();
-                const mountainTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Denver"}));
-                const year = String(mountainTime.getFullYear()).slice(-2);
-                const month = String(mountainTime.getMonth() + 1).padStart(2, '0');
-                const day = String(mountainTime.getDate()).padStart(2, '0');
-                const dateStr = year + month + day;
-                
-                document.getElementById('stream-source').textContent = dateStr;
-                
-            } catch (error) {
-                console.error('Failed to get stream info:', error);
+        async function restartFFmpeg() {
+            // This function is deprecated as FFmpeg is no longer used.
+            // It can be removed or repurposed if needed.
+            console.warn("Restart FFmpeg is deprecated.");
+        }
+
+        // --- UI Population and Updates ---
+        function populateStreamSelector() {
+            console.log('Populating stream selector with shows:', availableShows);
+            const selector = document.getElementById('stream-date-selector');
+            const streamList = document.getElementById('stream-list');
+
+            selector.innerHTML = ''; // Clear existing options
+            streamList.innerHTML = ''; // Clear list
+
+            if (availableShows.length === 0) {
+                selector.innerHTML = '<option>No shows available</option>';
+                return;
             }
+
+            availableShows.forEach(show => {
+                const option = document.createElement('option');
+                option.value = show.id;
+                option.textContent = `${show.date} - ${show.venue}`;
+                selector.appendChild(option);
+
+                const item = document.createElement('div');
+                item.className = 'stream-item';
+                item.dataset.id = show.id;
+                item.innerHTML = `
+                    <div class="stream-date">${show.date} - ${show.venue}</div>
+                    <div class="stream-status" id="status-${show.id}"></div>
+                `;
+                item.onclick = () => selectStream(show.id);
+                streamList.appendChild(item);
+            });
+
+            // Auto-select the first show
+            const firstShowId = availableShows[0].id;
+            selector.value = firstShowId;
+            selectStream(firstShowId);
         }
 
         function updateTime() {
             const now = new Date();
-            document.getElementById('current-time').textContent = 
-                now.toLocaleTimeString();
-            document.getElementById('utc-time').textContent = 
-                now.toISOString().slice(11, 19);
+            document.getElementById('current-time').textContent = now.toLocaleTimeString();
+            document.getElementById('utc-time').textContent = now.toISOString().slice(11, 19);
         }
 
-        function updateStreamDate() {
-            const now = new Date();
-            const mountainTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Denver"}));
-            document.getElementById('stream-date').textContent = 
-                mountainTime.toLocaleDateString();
-        }
-
-        function refreshStream() {
-            if (player) {
-                player.src('/stream/output.m3u8');
-                player.load();
-                checkHealth();
-            }
-        }
-
-        function testDirectStream() {
-            if (player) {
-                player.src('/api/test-stream');
-                player.load();
-                console.log('Testing direct stream proxy...');
-            }
-        }
-
-        function toggleFullscreen() {
-            if (player) {
-                if (player.isFullscreen()) {
-                    player.exitFullscreen();
-                } else {
-                    player.requestFullscreen();
-                }
-            }
-        }
-
-        async function restartFFmpeg() {
-            try {
-                const response = await fetch('http://143.198.144.51:3000/api/stream/restart', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    console.log('FFmpeg restart initiated');
-                    // Wait a moment then refresh the stream
-                    setTimeout(() => {
-                        refreshStream();
-                        checkHealth();
-                    }, 5000);
-                } else {
-                    console.error('Failed to restart FFmpeg:', result.error);
-                }
-            } catch (error) {
-                console.error('Error restarting FFmpeg:', error);
-            }
-        }
-
-        // Handle player errors
-        if (player) {
-            player.on('error', function() {
-                console.error('Player error:', player.error());
-                setTimeout(refreshStream, 5000); // Auto-retry after 5 seconds
-            });
-        }
-
-        // Stream Selector Functions
-        let currentStreamDate = 'auto';
-        let availableStreams = [];
-
-        function populateStreamSelector() {
-            console.log('Populating stream selector...');
-            // Generate list of potential stream dates (last 30 days)
-            const selector = document.getElementById('stream-date-selector');
-            const streamList = document.getElementById('stream-list');
-            
-            // Use Mountain Time instead of UTC/local time
-            const today = new Date();
-            const mountainToday = new Date(today.toLocaleString("en-US", {timeZone: "America/Denver"}));
-            const streams = [];
-            
-            // Generate dates for the last 30 days in Mountain Time
-            for (let i = 0; i < 30; i++) {
-                const date = new Date(mountainToday);
-                date.setDate(date.getDate() - i);
-                
-                const year = String(date.getFullYear()).slice(-2);
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const dateStr = year + month + day;
-                
-                // Get venue info for known shows
-                let venue = '';
-                if (dateStr === '250723') {
-                    venue = ' - Forest Hills Stadium (New York)';
-                } else if (dateStr === '250722') {
-                    venue = ' - Forest Hills Stadium (New York)';
-                } else if (dateStr === '250721') {
-                    venue = ' - Forest Hills Stadium (New York)';
-                } else if (dateStr === '250720') {
-                    venue = ' - Ruoff Music Center (Indiana)';
-                } else if (dateStr === '250719') {
-                    venue = ' - United Center (Chicago)';
-                } else if (dateStr === '250718') {
-                    venue = ' - United Center (Chicago)';
-                } else if (dateStr === '250716') {
-                    venue = ' - TD Pavilion at The Mann (Philadelphia)';
-                } else if (dateStr === '250715') {
-                    venue = ' - TD Pavilion at The Mann (Philadelphia)';
-                } else if (dateStr === '250713') {
-                    venue = ' - North Charleston Coliseum (Charleston)';
-                } else if (dateStr === '250712') {
-                    venue = ' - North Charleston Coliseum (Charleston)';
-                }
-                
-                const displayDate = date.toLocaleDateString('en-US', {
-                    month: '2-digit',
-                    day: '2-digit',
-                    timeZone: 'America/Denver'
-                }) + venue;
-                
-                streams.push({
-                    dateStr: dateStr,
-                    displayDate: displayDate,
-                    date: date
-                });
-            }
-            
-            availableStreams = streams;
-            
-            // Clear existing options except the first one
-            selector.innerHTML = '<option value="auto">Auto (Latest Available)</option>';
-            
-            // Populate dropdown
-            streams.forEach(stream => {
-                const option = document.createElement('option');
-                option.value = stream.dateStr;
-                option.textContent = stream.displayDate;
-                selector.appendChild(option);
-            });
-            
-            // Don't automatically select anything initially - let user choose
-            // Start with July 23 (most recent show) as the default
-            currentStreamDate = '250723';
-            
-            // Set the selector to July 23
-            selector.value = '250723';
-            
-            // Populate stream list
-            updateStreamList();
-            
-            // Load July 23 as the initial stream
-            selectStream('250723');
-            
-            // Check availability of recent streams
-            checkStreamAvailability();
-        }
-
-        async function updateStreamList() {
-            const streamList = document.getElementById('stream-list');
-            streamList.innerHTML = '';
-            
-            availableStreams.slice(0, 10).forEach(stream => {
-                const item = document.createElement('div');
-                item.className = 'stream-item';
-                if (currentStreamDate === stream.dateStr) {
-                    item.classList.add('active');
-                }
-                
-                item.innerHTML = `
-                    <div class="stream-date">${stream.displayDate}</div>
-                    <div class="stream-status" id="status-${stream.dateStr}">Checking...</div>
-                `;
-                
-                item.onclick = () => selectStream(stream.dateStr);
-                streamList.appendChild(item);
-            });
-        }
-
-        async function checkStreamAvailability() {
-            // Check availability of first 10 streams via server API
-            const results = [];
-            
-            for (const stream of availableStreams.slice(0, 10)) {
-                try {
-                    const response = await fetch(`http://143.198.144.51:3000/api/stream/load-date/${stream.dateStr}`, { method: 'HEAD' });
-                    const statusElement = document.getElementById(`status-${stream.dateStr}`);
-                    
-                    if (response.ok) {
-                        statusElement.textContent = 'Available';
-                        statusElement.className = 'stream-status available';
-                        results.push({ date: stream.dateStr, available: true });
-                    } else {
-                        statusElement.textContent = 'Unavailable';
-                        statusElement.className = 'stream-status unavailable';
-                        const item = statusElement.closest('.stream-item');
-                        item.classList.add('unavailable');
-                        results.push({ date: stream.dateStr, available: false });
-                    }
-                } catch (error) {
-                    const statusElement = document.getElementById(`status-${stream.dateStr}`);
-                    statusElement.textContent = 'Unavailable';
-                    statusElement.className = 'stream-status unavailable';
-                    const item = statusElement.closest('.stream-item');
-                    item.classList.add('unavailable');
-                    results.push({ date: stream.dateStr, available: false });
-                }
-                
-                // Small delay to avoid overwhelming the server
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-            
-            // Log the pattern for debugging
-            const availableDates = results.filter(r => r.available).map(r => r.date);
-            console.log('Available stream dates:', availableDates);
-        }
-
+        // --- Player & Stream Control ---
         function changeStreamDate() {
             const selector = document.getElementById('stream-date-selector');
-            console.log('🎯 Dropdown value:', selector.value);
             selectStream(selector.value);
         }
 
-        async function selectStream(dateStr) {
-            console.log(`🎯 selectStream called with: ${dateStr}`);
-            currentStreamDate = dateStr;
-            
-            // Update selector dropdown to match what we're actually loading
-            const selector = document.getElementById('stream-date-selector');
-            selector.value = dateStr;
-            console.log(`📺 Updated selector to: ${dateStr}`);
-            
-            // Update active item in list
-            document.querySelectorAll('.stream-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            const activeItem = document.querySelector(`[onclick*="${dateStr}"]`);
-            if (activeItem) {
-                activeItem.classList.add('active');
-                console.log(`✅ Set active item for: ${dateStr}`);
+        function selectStream(showId) {
+            if (!showId) {
+                console.error("Invalid show ID provided to selectStream.");
+                return;
             }
             
-            try {
-                let streamUrl;
-                
-                if (dateStr === 'auto') {
-                    // Use server's stream
-                    streamUrl = `/stream/output.m3u8?t=${Date.now()}`;
-                    console.log(`🔄 Loading AUTO stream: ${streamUrl}`);
-                } else {
-                    // Load the selected date's stream via server API (masks external URLs)
-                    streamUrl = `http://143.198.144.51:3000/api/stream/load-date/${dateStr}?t=${Date.now()}`;
-                    console.log(`🎬 Loading DATE stream via API: ${streamUrl}`);
-                    
-                    // Update the stream date display to match selection
-                    const stream = availableStreams.find(s => s.dateStr === dateStr);
-                    const displayDate = stream ? stream.displayDate : dateStr;
-                    document.getElementById('stream-date').textContent = displayDate;
-                    console.log(`📅 Updated display date to: ${displayDate}`);
-                }
-                
-                // Actually load the stream
-                if (player) {
-                    console.log(`🎥 Setting player source to: ${streamUrl}`);
-                    player.src({
-                        src: streamUrl,
-                        type: 'application/x-mpegURL'
-                    });
-                    
-                    player.load();
-                    console.log(`⏳ Player load initiated`);
-                    
-                    // Force play after a short delay to ensure load is complete
-                    setTimeout(() => {
-                        player.play().then(() => {
-                            console.log(`▶️ Autoplay successful for: ${dateStr}`);
-                        }).catch(e => {
-                            console.log(`❌ Autoplay blocked for: ${dateStr}`, e);
-                        });
-                    }, 1000);
-                } else {
-                    console.error('❌ Player not available');
-                }
-                
-                console.log(`✅ Stream switched to: ${dateStr}`);
-                
-            } catch (error) {
-                console.error('❌ Error switching stream:', error);
+            console.log(`Attempting to select stream for show ID: ${showId}`);
+            
+            // Update UI
+            document.querySelectorAll('.stream-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.id === showId);
+            });
+            document.getElementById('stream-date-selector').value = showId;
+
+            const selectedShow = availableShows.find(s => s.id === showId);
+            if (selectedShow) {
+                document.getElementById('stream-date').textContent = selectedShow.date;
+                document.getElementById('stream-source').textContent = selectedShow.id;
+            }
+
+            // Construct stream URL and load into player
+            const streamUrl = `${API_BASE_URL}/api/stream/load-date/${showId}`;
+            console.log(`Loading stream URL: ${streamUrl}`);
+            
+            player.src({
+                src: streamUrl,
+                type: 'application/x-mpegURL'
+            });
+            player.load();
+            player.play().catch(e => console.log("Autoplay was prevented.", e));
+        }
+        
+        function refreshStream() {
+            const currentShowId = document.getElementById('stream-date-selector').value;
+            selectStream(currentShowId);
+        }
+
+        function toggleFullscreen() {
+            if (player.isFullscreen()) {
+                player.exitFullscreen();
+            } else {
+                player.requestFullscreen();
             }
         }
 
-        // Cleanup on page unload
+        // --- Cleanup ---
         window.addEventListener('beforeunload', function() {
-            if (statusCheckInterval) {
-                clearInterval(statusCheckInterval);
-            }
-            if (player) {
-                player.dispose();
-            }
+            if (statusCheckInterval) clearInterval(statusCheckInterval);
+            if (player) player.dispose();
         });
     </script>
 </body>
