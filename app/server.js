@@ -7,7 +7,6 @@ const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const IP_ADDRESS = '143.198.144.51';
 
 // --- Middleware Setup ---
 
@@ -22,7 +21,7 @@ app.use(helmet({
             ...helmet.contentSecurityPolicy.getDefaultDirectives(),
             "script-src": ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net"],
             "style-src": ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net", "https://cdnjs.cloudflare.com"],
-            "connect-src": ["'self'", `http://${IP_ADDRESS}:3000`], // Allow connections to self
+            "connect-src": ["'self'"], // Allow connections to self
             "worker-src": ["'self'", "blob:"], // Allow blob workers for video.js
             "img-src": ["'self'", "data:"],
         },
@@ -125,5 +124,4 @@ app.get('/api/shows', (req, res) => {
 // --- Server Initialization ---
 app.listen(PORT, () => {
     console.log(`🌊 Stream relay server running on port ${PORT}`);
-    console.log(`🌐 Web player at: http://${IP_ADDRESS}:${PORT}`);
 });
