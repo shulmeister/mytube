@@ -238,35 +238,6 @@
             50% { opacity: 0.5; }
         }
 
-        /* Stream Selector */
-        .stream-selector {
-            background-color: #262626;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 16px;
-        }
-
-        .stream-selector select {
-            width: 100%;
-            background-color: #404040;
-            border: 1px solid #606060;
-            border-radius: 6px;
-            color: #ffffff;
-            padding: 8px 12px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .stream-selector select:focus {
-            outline: none;
-            border-color: #ff0000;
-        }
-
-        .stream-selector select option {
-            background-color: #404040;
-            color: #ffffff;
-        }
-
         .stream-list {
             max-height: 200px;
             overflow-y: auto;
@@ -341,6 +312,185 @@
 
         .description-content li {
             margin-bottom: 4px;
+        }
+
+        /* Comments Section */
+        .comments-section {
+            background-color: #181818;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .comments-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #303030;
+        }
+
+        .comments-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        .sort-options select {
+            background-color: transparent;
+            border: none;
+            color: #aaaaaa;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .sort-options select:focus {
+            outline: none;
+        }
+
+        .add-comment {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .comment-avatar {
+            flex-shrink: 0;
+        }
+
+        .comment-avatar i {
+            font-size: 32px;
+            color: #aaaaaa;
+        }
+
+        .comment-input-container {
+            flex: 1;
+        }
+
+        #comment-input {
+            width: 100%;
+            background-color: transparent;
+            border: none;
+            border-bottom: 1px solid #303030;
+            color: #ffffff;
+            font-size: 14px;
+            padding: 8px 0;
+            resize: vertical;
+            min-height: 20px;
+            max-height: 100px;
+        }
+
+        #comment-input:focus {
+            outline: none;
+            border-bottom-color: #ffffff;
+        }
+
+        .comment-actions {
+            margin-top: 8px;
+            display: none;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .comment-actions.active {
+            display: flex;
+        }
+
+        .comment-actions button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 18px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #cancel-comment {
+            background-color: transparent;
+            color: #aaaaaa;
+        }
+
+        #cancel-comment:hover {
+            background-color: #303030;
+        }
+
+        #post-comment {
+            background-color: #065fd4;
+            color: #ffffff;
+        }
+
+        #post-comment:disabled {
+            background-color: #303030;
+            color: #717171;
+            cursor: not-allowed;
+        }
+
+        #post-comment:not(:disabled):hover {
+            background-color: #4c9eff;
+        }
+
+        .comment {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 8px 0;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-author {
+            font-weight: 500;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        .comment-time {
+            color: #aaaaaa;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .comment-text {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .comment-actions-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comment-action {
+            background: none;
+            border: none;
+            color: #aaaaaa;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 18px;
+            transition: background-color 0.2s;
+        }
+
+        .comment-action:hover {
+            background-color: #303030;
+        }
+
+        .comment-action.liked {
+            color: #065fd4;
+        }
+
+        .like-button.liked {
+            background-color: #263850 !important;
+            color: #4fc3f7 !important;
+        }
+
+        .like-button.liked i {
+            color: #4fc3f7 !important;
         }
 
         /* Responsive Design */
@@ -430,9 +580,10 @@
 
             <!-- Video Actions -->
             <div class="video-actions">
-                <button class="action-button primary">
+                <button class="action-button primary" id="like-button" onclick="toggleLike()">
                     <i class="fas fa-thumbs-up"></i>
-                    Like
+                    <span id="like-text">Like</span>
+                    <span id="like-count">(42)</span>
                 </button>
                 <button class="action-button">
                     <i class="fas fa-share"></i>
@@ -468,23 +619,50 @@
                     </ul>
                 </div>
             </div>
+
+            <!-- Comments Section -->
+            <div class="comments-section">
+                <div class="comments-header">
+                    <h3><span id="comment-count">12</span> Comments</h3>
+                    <div class="sort-options">
+                        <select id="comment-sort">
+                            <option value="top">Top comments</option>
+                            <option value="newest">Newest first</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Add Comment -->
+                <div class="add-comment">
+                    <div class="comment-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="comment-input-container">
+                        <textarea id="comment-input" placeholder="Add a comment..."></textarea>
+                        <div class="comment-actions">
+                            <button id="cancel-comment" onclick="cancelComment()">Cancel</button>
+                            <button id="post-comment" onclick="postComment()" disabled>Comment</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comments List -->
+                <div class="comments-list" id="comments-list">
+                    <!-- Comments will be populated here -->
+                </div>
+            </div>
         </div>
 
         <!-- Sidebar -->
         <div class="sidebar">
-            <!-- Stream Selector -->
+            <!-- Stream Info -->
             <div class="sidebar-section">
                 <div class="sidebar-title">
                     <i class="fas fa-calendar-alt"></i>
-                    Select Stream Date
-                </div>
-                <div class="stream-selector">
-                    <select id="stream-date-selector" onchange="changeStreamDate()">
-                        <option value="auto">Auto (Latest Available)</option>
-                    </select>
+                    Current Stream
                 </div>
                 <div class="stream-list" id="stream-list">
-                    <!-- Stream items will be populated by JavaScript -->
+                    <!-- Current stream info will be populated by JavaScript -->
                 </div>
             </div>
 
@@ -586,8 +764,7 @@
 
         async function initializePage() {
             try {
-                await fetchShows();
-                populateStreamSelector();
+                await loadCurrentStream();
                 checkHealth();
                 updateTime();
             } catch (error) {
@@ -597,16 +774,54 @@
             }
         }
 
-        // --- Data Fetching & API Calls ---
-        async function fetchShows() {
+        // --- Auto Stream Detection ---
+        async function loadCurrentStream() {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/shows`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                availableShows = await response.json();
-                console.log('Fetched shows:', availableShows);
+                console.log("Detecting current stream...");
+                const response = await fetch(`${API_BASE_URL}/api/stream/current`);
+                const streamData = await response.json();
+                
+                if (streamData.available) {
+                    // Update UI
+                    document.getElementById('stream-date').textContent = streamData.date;
+                    document.getElementById('stream-source').textContent = streamData.dateStr;
+                    
+                    // Update stream list
+                    const streamList = document.getElementById('stream-list');
+                    streamList.innerHTML = `
+                        <div class="stream-item active">
+                            <div class="stream-date">${streamData.date}</div>
+                            <div class="stream-venue">Current Live Stream</div>
+                        </div>
+                    `;
+                    
+                    // Load stream
+                    console.log(`Loading current stream: ${streamData.streamUrl}`);
+                    player.src({
+                        src: streamData.streamUrl,
+                        type: 'application/x-mpegURL'
+                    });
+                    player.load();
+                    player.play().catch(e => console.log("Autoplay was prevented.", e));
+                    
+                } else {
+                    // No stream available
+                    document.getElementById('stream-date').textContent = 'No Stream';
+                    document.getElementById('stream-source').textContent = 'N/A';
+                    
+                    const streamList = document.getElementById('stream-list');
+                    streamList.innerHTML = `
+                        <div class="stream-item">
+                            <div class="stream-date">No Live Stream</div>
+                            <div class="stream-venue">Check back during show times</div>
+                        </div>
+                    `;
+                }
+                
             } catch (error) {
-                console.error('Failed to fetch shows:', error);
-                availableShows = []; // Ensure it's an empty array on failure
+                console.error("Failed to load current stream:", error);
+                document.getElementById('stream-date').textContent = 'Error';
+                document.getElementById('stream-source').textContent = 'Failed to load';
             }
         }
 
@@ -641,43 +856,6 @@
             console.warn("Restart FFmpeg is deprecated.");
         }
 
-        // --- UI Population and Updates ---
-        function populateStreamSelector() {
-            console.log('Populating stream selector with shows:', availableShows);
-            const selector = document.getElementById('stream-date-selector');
-            const streamList = document.getElementById('stream-list');
-
-            selector.innerHTML = ''; // Clear existing options
-            streamList.innerHTML = ''; // Clear list
-
-            if (availableShows.length === 0) {
-                selector.innerHTML = '<option>No shows available</option>';
-                return;
-            }
-
-            availableShows.forEach(show => {
-                const option = document.createElement('option');
-                option.value = show.id;
-                option.textContent = `${show.date} - ${show.venue}`;
-                selector.appendChild(option);
-
-                const item = document.createElement('div');
-                item.className = 'stream-item';
-                item.dataset.id = show.id;
-                item.innerHTML = `
-                    <div class="stream-date">${show.date} - ${show.venue}</div>
-                    <div class="stream-status" id="status-${show.id}"></div>
-                `;
-                item.onclick = () => selectStream(show.id);
-                streamList.appendChild(item);
-            });
-
-            // Auto-select the first show
-            const firstShowId = availableShows[0].id;
-            selector.value = firstShowId;
-            selectStream(firstShowId);
-        }
-
         function updateTime() {
             const now = new Date();
             document.getElementById('current-time').textContent = now.toLocaleTimeString();
@@ -685,46 +863,8 @@
         }
 
         // --- Player & Stream Control ---
-        function changeStreamDate() {
-            const selector = document.getElementById('stream-date-selector');
-            selectStream(selector.value);
-        }
-
-        function selectStream(showId) {
-            if (!showId) {
-                console.error("Invalid show ID provided to selectStream.");
-                return;
-            }
-            
-            console.log(`Attempting to select stream for show ID: ${showId}`);
-            
-            // Update UI
-            document.querySelectorAll('.stream-item').forEach(item => {
-                item.classList.toggle('active', item.dataset.id === showId);
-            });
-            document.getElementById('stream-date-selector').value = showId;
-
-            const selectedShow = availableShows.find(s => s.id === showId);
-            if (selectedShow) {
-                document.getElementById('stream-date').textContent = selectedShow.date;
-                document.getElementById('stream-source').textContent = selectedShow.id;
-            }
-
-            // Construct stream URL and load into player
-            const streamUrl = `${API_BASE_URL}/api/stream/load-date/${showId}`;
-            console.log(`Loading stream URL: ${streamUrl}`);
-            
-            player.src({
-                src: streamUrl,
-                type: 'application/x-mpegURL'
-            });
-            player.load();
-            player.play().catch(e => console.log("Autoplay was prevented.", e));
-        }
-        
         function refreshStream() {
-            const currentShowId = document.getElementById('stream-date-selector').value;
-            selectStream(currentShowId);
+            loadCurrentStream();
         }
 
         function toggleFullscreen() {
@@ -734,6 +874,208 @@
                 player.requestFullscreen();
             }
         }
+
+        // --- Like Button Functionality ---
+        let isLiked = false;
+        let likeCount = 42; // Starting count
+
+        function toggleLike() {
+            const likeButton = document.getElementById('like-button');
+            const likeText = document.getElementById('like-text');
+            const likeCountEl = document.getElementById('like-count');
+            
+            isLiked = !isLiked;
+            
+            if (isLiked) {
+                likeButton.classList.add('liked');
+                likeText.textContent = 'Liked';
+                likeCount++;
+                
+                // Add a nice animation
+                likeButton.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    likeButton.style.transform = 'scale(1)';
+                }, 150);
+            } else {
+                likeButton.classList.remove('liked');
+                likeText.textContent = 'Like';
+                likeCount--;
+            }
+            
+            likeCountEl.textContent = `(${likeCount})`;
+            
+            // Save to localStorage
+            localStorage.setItem('myTube_liked', isLiked);
+            localStorage.setItem('myTube_likeCount', likeCount);
+        }
+
+        // --- Comments Functionality ---
+        let comments = [
+            {
+                id: 1,
+                author: "PhishHead_92",
+                time: "2 hours ago",
+                text: "This is amazing! Thanks for hosting this stream. The quality is incredible! 🎵",
+                likes: 15,
+                liked: false
+            },
+            {
+                id: 2,
+                author: "JamFan2025",
+                time: "1 hour ago", 
+                text: "Finally caught a show! Been waiting all tour for this. The sound is crystal clear.",
+                likes: 8,
+                liked: false
+            },
+            {
+                id: 3,
+                author: "TourRat_Official",
+                time: "45 minutes ago",
+                text: "Couch tour life! This is so much better than the official streams. Thank you! 🙏",
+                likes: 23,
+                liked: false
+            },
+            {
+                id: 4,
+                author: "GrooveSeeker",
+                time: "30 minutes ago",
+                text: "That last jam was INSANE! Anyone else catch that transition?!",
+                likes: 12,
+                liked: false
+            },
+            {
+                id: 5,
+                author: "VintagePhish",
+                time: "15 minutes ago",
+                text: "Been following since '95 and this stream quality rivals being there. Incredible work!",
+                likes: 31,
+                liked: false
+            }
+        ];
+
+        function initializeComments() {
+            renderComments();
+            updateCommentCount();
+            
+            // Load saved like state
+            const savedLiked = localStorage.getItem('myTube_liked') === 'true';
+            const savedCount = parseInt(localStorage.getItem('myTube_likeCount')) || 42;
+            
+            if (savedLiked) {
+                isLiked = true;
+                likeCount = savedCount;
+                document.getElementById('like-button').classList.add('liked');
+                document.getElementById('like-text').textContent = 'Liked';
+                document.getElementById('like-count').textContent = `(${likeCount})`;
+            }
+        }
+
+        function renderComments() {
+            const commentsList = document.getElementById('comments-list');
+            commentsList.innerHTML = '';
+            
+            comments.forEach(comment => {
+                const commentEl = document.createElement('div');
+                commentEl.className = 'comment';
+                commentEl.innerHTML = `
+                    <div class="comment-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="comment-content">
+                        <div class="comment-author">
+                            ${comment.author}
+                            <span class="comment-time">${comment.time}</span>
+                        </div>
+                        <div class="comment-text">${comment.text}</div>
+                        <div class="comment-actions-bar">
+                            <button class="comment-action ${comment.liked ? 'liked' : ''}" onclick="toggleCommentLike(${comment.id})">
+                                <i class="fas fa-thumbs-up"></i> ${comment.likes}
+                            </button>
+                            <button class="comment-action">
+                                <i class="fas fa-thumbs-down"></i>
+                            </button>
+                            <button class="comment-action">Reply</button>
+                        </div>
+                    </div>
+                `;
+                commentsList.appendChild(commentEl);
+            });
+        }
+
+        function updateCommentCount() {
+            document.getElementById('comment-count').textContent = comments.length;
+        }
+
+        function toggleCommentLike(commentId) {
+            const comment = comments.find(c => c.id === commentId);
+            if (comment) {
+                comment.liked = !comment.liked;
+                comment.likes += comment.liked ? 1 : -1;
+                renderComments();
+            }
+        }
+
+        function postComment() {
+            const input = document.getElementById('comment-input');
+            const text = input.value.trim();
+            
+            if (text) {
+                const newComment = {
+                    id: Date.now(),
+                    author: "You",
+                    time: "Just now",
+                    text: text,
+                    likes: 0,
+                    liked: false
+                };
+                
+                comments.unshift(newComment); // Add to beginning
+                input.value = '';
+                toggleCommentActions(false);
+                renderComments();
+                updateCommentCount();
+            }
+        }
+
+        function cancelComment() {
+            document.getElementById('comment-input').value = '';
+            toggleCommentActions(false);
+        }
+
+        function toggleCommentActions(show) {
+            const actions = document.querySelector('.comment-actions');
+            const postButton = document.getElementById('post-comment');
+            
+            if (show) {
+                actions.classList.add('active');
+            } else {
+                actions.classList.remove('active');
+            }
+        }
+
+        // Comment input event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const commentInput = document.getElementById('comment-input');
+            const postButton = document.getElementById('post-comment');
+            
+            commentInput.addEventListener('focus', () => toggleCommentActions(true));
+            commentInput.addEventListener('input', function() {
+                const hasText = this.value.trim().length > 0;
+                postButton.disabled = !hasText;
+            });
+            
+            commentInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!postButton.disabled) {
+                        postComment();
+                    }
+                }
+            });
+            
+            // Initialize comments after DOM is ready
+            setTimeout(initializeComments, 100);
+        });
 
         // --- Cleanup ---
         window.addEventListener('beforeunload', function() {
