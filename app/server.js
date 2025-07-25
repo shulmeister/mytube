@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
+// const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs');
 
@@ -10,22 +10,22 @@ const PORT = process.env.PORT || 3000;
 // Body parsing middleware
 app.use(express.json());
 
-// Security middleware
-app.use(helmet({
-    hsts: false, // Disable HSTS
-    crossOriginOpenerPolicy: false, // Disable COOP
-    crossOriginEmbedderPolicy: false, // Disable COEP
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            mediaSrc: ["'self'", "blob:", "data:"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net", "https://cdnjs.cloudflare.com"],
-            connectSrc: ["'self'", "http://143.198.144.51:3000"], // Allow connections to self
-            workerSrc: ["'self'", "blob:"]
-        }
-    }
-}));
+// Security middleware - TEMPORARILY DISABLED FOR DEBUGGING
+// app.use(helmet({
+//     hsts: false, // Disable HSTS
+//     crossOriginOpenerPolicy: false, // Disable COOP
+//     crossOriginEmbedderPolicy: false, // Disable COEP
+//     contentSecurityPolicy: {
+//         directives: {
+//             defaultSrc: ["'self'"],
+//             mediaSrc: ["'self'", "blob:", "data:"],
+//             scriptSrc: ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net"],
+//             styleSrc: ["'self'", "'unsafe-inline'", "https://vjs.zencdn.net", "https://cdnjs.cloudflare.com"],
+//             connectSrc: ["'self'", "http://143.198.144.51:3000"], // Allow connections to self
+//             workerSrc: ["'self'", "blob:"]
+//         }
+//     }
+// }));
 
 // CORS configuration for HLS streaming
 app.use(cors({
