@@ -5,6 +5,13 @@ const path = require('path');
 const fs = require('fs');
 const fetch = require('node-fetch');
 
+// Load environment variables from .env file if it exists
+try {
+    require('dotenv').config();
+} catch (err) {
+    // dotenv not installed, fallback to process.env
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
