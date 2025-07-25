@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
+// const helmet = require('helmet'); // REMOVED
 const path = require('path');
 const fs = require('fs');
 const fetch = require('node-fetch');
@@ -13,9 +13,8 @@ const PORT = process.env.PORT || 3000;
 // 1. Body parsing middleware
 app.use(express.json());
 
-// 2. Security Middleware (Helmet)
-app.use(helmet());
-
+// 2. Security Middleware (Helmet) - REMOVED
+// app.use(helmet()); 
 
 // 3. CORS Configuration
 app.use(cors({
