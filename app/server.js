@@ -98,6 +98,95 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// --- Archive API Endpoints ---
+
+// Get list of archived shows
+app.get('/api/archive/shows', (req, res) => {
+    try {
+        const archiveIndexPath = path.join(__dirname, '..', 'archives', 'archive-index.json');
+        if (!fs.existsSync(archiveIndexPath)) {
+            return res.json({ shows: [] });
+        }
+        
+        const archiveData = JSON.parse(fs.readFileSync(archiveIndexPath, 'utf8'));
+        
+        // Filter only completed shows and format for UI
+        const completedShows = archiveData.shows
+            .filter(show => show.status === 'completed')
+            .map(show => ({
+                id: show.id,
+                date: show.date,
+                venue: show.venue || 'Unknown Venue',
+                fileSize: show.fileSize,
+                source: show.source || 'downloaded'
+            }))
+            .sort((a, b) => new Date(b.date) - new Date(a.date)); // Newest first
+        
+        res.json({ shows: completedShows });
+    } catch (error) {
+        console.error('Error loading archive shows:', error);
+        res.status(500).json({ error: 'Failed to load archive shows' });
+    }
+});
+
+// Stream archived show
+app.get('/api/archive/stream/:showId', (req, res) => {
+    try {
+        const { showId } = req.params;
+        const archiveIndexPath = path.join(__dirname, '..', 'archives', 'archive-index.json');
+        
+        if (!fs.existsSync(archiveIndexPath)) {
+            return res.status(404).json({ error: 'Archive not found' });
+        }
+        
+        const archiveData = JSON.parse(fs.readFileSync(archiveIndexPath, 'utf8'));
+        const show = archiveData.shows.find(s => s.id === showId && s.status === 'completed');
+        
+        if (!show) {
+            return res.status(404).json({ error: 'Show not found in archive' });
+        }
+        
+        const filePath = show.filePath;
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: 'Archive file not found' });
+        }
+        
+        const stat = fs.statSync(filePath);
+        const fileSize = stat.size;
+        const range = req.headers.range;
+        
+        if (range) {
+            // Handle range requests for video seeking
+            const parts = range.replace(/bytes=/, "").split("-");
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+            
+            const chunksize = (end - start) + 1;
+            const file = fs.createReadStream(filePath, { start, end });
+            
+            res.writeHead(206, {
+                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunksize,
+                'Content-Type': 'video/mp4',
+            });
+            
+            file.pipe(res);
+        } else {
+            // Stream entire file
+            res.writeHead(200, {
+                'Content-Length': fileSize,
+                'Content-Type': 'video/mp4',
+            });
+            
+            fs.createReadStream(filePath).pipe(res);
+        }
+    } catch (error) {
+        console.error('Error streaming archive:', error);
+        res.status(500).json({ error: 'Failed to stream archive' });
+    }
+});
+
 // Auto-detect current stream endpoint
 app.get('/api/stream/current', async (req, res) => {
     try {
