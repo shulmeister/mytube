@@ -100,43 +100,81 @@ app.get('/api/health', (req, res) => {
 
 // Auto-detect current stream endpoint
 app.get('/api/stream/current', async (req, res) => {
-    const today = new Date();
-    const mountainTime = new Date(today.toLocaleString("en-US", {timeZone: "America/Denver"}));
-    
-    // Try today first, then yesterday
-    const dates = [];
-    for (let i = 0; i < 2; i++) {
-        const testDate = new Date(mountainTime);
-        testDate.setDate(testDate.getDate() - i);
-        const dateStr = testDate.getFullYear().toString().slice(-2) + 
-                       String(testDate.getMonth() + 1).padStart(2, '0') + 
-                       String(testDate.getDate()).padStart(2, '0');
-        dates.push(dateStr);
-    }
-    
-    // Test each date to find an available stream
-    for (const dateStr of dates) {
-        try {
-            const testUrl = `${STREAM_BASE_URL}/ph${dateStr}/ph${dateStr}_1080p.m3u8`;
-            const testResponse = await fetch(testUrl, { method: 'HEAD' });
-            if (testResponse.ok) {
-                return res.json({
-                    dateStr,
-                    streamUrl: `/api/stream/load-date/${dateStr}`,
-                    date: `20${dateStr.slice(0,2)}-${dateStr.slice(2,4)}-${dateStr.slice(4,6)}`,
-                    available: true
-                });
+    try {
+        // Load shows data
+        const showsPath = path.join(__dirname, 'shows.json');
+        const showsData = JSON.parse(fs.readFileSync(showsPath, 'utf8'));
+        
+        const today = new Date();
+        const mountainTime = new Date(today.toLocaleString("en-US", {timeZone: "America/Denver"}));
+        
+        // Generate today's and tomorrow's date strings
+        const todayStr = mountainTime.getFullYear().toString().slice(-2) + 
+                        String(mountainTime.getMonth() + 1).padStart(2, '0') + 
+                        String(mountainTime.getDate()).padStart(2, '0');
+        
+        const tomorrow = new Date(mountainTime);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.getFullYear().toString().slice(-2) + 
+                           String(tomorrow.getMonth() + 1).padStart(2, '0') + 
+                           String(tomorrow.getDate()).padStart(2, '0');
+        
+        // Check for today's show first, then tomorrow's, then fall back to most recent
+        const datesToCheck = [todayStr, tomorrowStr];
+        
+        // Test today and tomorrow first
+        for (const dateStr of datesToCheck) {
+            try {
+                const testUrl = `${STREAM_BASE_URL}/ph${dateStr}/ph${dateStr}_1080p.m3u8`;
+                const testResponse = await fetch(testUrl, { method: 'HEAD' });
+                if (testResponse.ok) {
+                    return res.json({
+                        dateStr,
+                        streamUrl: `/api/stream/load-date/${dateStr}`,
+                        date: `20${dateStr.slice(0,2)}-${dateStr.slice(2,4)}-${dateStr.slice(4,6)}`,
+                        available: true,
+                        type: dateStr === todayStr ? 'current' : 'upcoming'
+                    });
+                }
+            } catch (error) {
+                console.log(`Stream test failed for ${dateStr}:`, error.message);
             }
-        } catch (error) {
-            console.log(`Stream test failed for ${dateStr}:`, error.message);
         }
+        
+        // Fall back to most recent show from shows.json
+        console.log('No current/upcoming shows, falling back to most recent show...');
+        for (const show of showsData) {
+            try {
+                const testUrl = `${STREAM_BASE_URL}/ph${show.id}/ph${show.id}_1080p.m3u8`;
+                const testResponse = await fetch(testUrl, { method: 'HEAD' });
+                if (testResponse.ok) {
+                    return res.json({
+                        dateStr: show.id,
+                        streamUrl: `/api/stream/load-date/${show.id}`,
+                        date: show.date,
+                        venue: show.venue,
+                        available: true,
+                        type: 'archive'
+                    });
+                }
+            } catch (error) {
+                console.log(`Archive stream test failed for ${show.id}:`, error.message);
+            }
+        }
+        
+        // No streams available at all
+        res.status(404).json({ 
+            error: 'No streams currently available',
+            available: false 
+        });
+        
+    } catch (error) {
+        console.error('Error in /api/stream/current:', error);
+        res.status(500).json({ 
+            error: 'Server error while detecting stream',
+            available: false 
+        });
     }
-    
-    // No streams available
-    res.status(404).json({ 
-        error: 'No streams currently available',
-        available: false 
-    });
 });
 
 app.get('/api/shows', (req, res) => {
