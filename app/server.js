@@ -8,6 +8,10 @@ const fetch = require('node-fetch');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Streaming configuration - use environment variables for security
+const STREAM_BASE_URL = process.env.STREAM_BASE_URL || 'https://example.com/Live/00';
+const STREAM_PATH_PATTERN = process.env.STREAM_PATH_PATTERN || '/ph{DATE}/ph{DATE}_1080p.m3u8';
+
 // --- Middleware Setup ---
 
 // 1. Body parsing middleware
@@ -31,7 +35,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Endpoint to load and proxy the HLS manifest (.m3u8 file)
 app.get('/api/stream/load-date/:dateStr', async (req, res) => {
     const { dateStr } = req.params;
-    const hlsUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/ph${dateStr}_1080p.m3u8`;
+    const hlsUrl = `${STREAM_BASE_URL}/ph${dateStr}/ph${dateStr}_1080p.m3u8`;
 
     try {
         const hlsResponse = await fetch(hlsUrl);
@@ -64,7 +68,7 @@ app.get('/api/stream/load-date/:dateStr', async (req, res) => {
 // Endpoint to proxy the individual HLS video segments (.ts files)
 app.get('/api/stream/proxy/:dateStr/:segmentFile', async (req, res) => {
     const { dateStr, segmentFile } = req.params;
-    const segmentBaseUrl = `https://forbinaquarium.com/Live/00/ph${dateStr}/`;
+    const segmentBaseUrl = `${STREAM_BASE_URL}/ph${dateStr}/`;
     const externalSegmentUrl = segmentBaseUrl + decodeURIComponent(segmentFile);
 
     try {
