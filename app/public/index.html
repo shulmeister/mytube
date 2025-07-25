@@ -663,7 +663,7 @@
 
             <!-- Video Meta -->
             <div class="video-meta">
-                <h1 class="video-title">Live Stream Relay</h1>
+                <h1 class="video-title" id="video-title">Live Stream Relay</h1>
                 <div class="video-stats">
                     <span class="live-badge" id="live-badge">LIVE</span>
                     <span id="viewer-count">•</span>
@@ -1098,10 +1098,12 @@
                 document.getElementById('video-title').textContent = 
                     `Phish - ${formatDate(show.date)} - ${show.venue}`;
                 
-                // Update video source to archived file
-                const videoElement = document.getElementById('video-player');
-                videoElement.src = `/api/archive/stream/${showId}`;
-                videoElement.load();
+                // Update video source to archived file using Video.js player
+                player.src({
+                    src: `/api/archive/stream/${showId}`,
+                    type: 'video/mp4'
+                });
+                player.load();
                 
                 // Update archive selector to show current
                 loadArchiveShows();
@@ -1124,9 +1126,12 @@
             // Reset to live stream
             document.getElementById('video-title').textContent = currentVideoTitle;
             
-            const videoElement = document.getElementById('video-player');
-            videoElement.src = currentStreamUrl;
-            videoElement.load();
+            // Reset video source to live stream using Video.js player
+            player.src({
+                src: currentStreamUrl,
+                type: 'application/x-mpegURL'
+            });
+            player.load();
             
             // Update live badge
             document.querySelector('.live-badge').textContent = 'LIVE';
