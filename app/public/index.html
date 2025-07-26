@@ -851,12 +851,27 @@
             console.log('MyTube v2.1 - Initializing...');
             
             player = videojs('live-player', {
-                html5: { hls: { overrideNative: true } },
+                html5: { 
+                    hls: { 
+                        overrideNative: true,
+                        enableLowInitialPlaylist: true,
+                        smoothQualityChange: true,
+                        handlePartialData: true
+                    }
+                },
                 liveui: true,
                 fluid: true,
                 responsive: true,
                 autoplay: true,
-                muted: true
+                muted: true,
+                preload: 'auto',
+                playbackRates: [0.5, 1, 1.25, 1.5, 2],
+                bufferOptions: {
+                    bufferToKeep: 30,
+                    maxBufferLength: 60,
+                    maxBufferSize: 30 * 1000 * 1000,
+                    maxBufferTime: 30
+                }
             });
 
             player.ready(async () => {
@@ -871,7 +886,30 @@
                 console.error('Player error:', player.error());
                 const statusEl = document.getElementById('stream-status');
                 statusEl.textContent = 'Playback Error';
-                // Consider a more robust retry mechanism if needed
+                
+                // Auto-retry on network errors
+                const error = player.error();
+                if (error && (error.code === 2 || error.code === 4)) {
+                    console.log('Network error detected, retrying in 3 seconds...');
+                    setTimeout(() => {
+                        console.log('Attempting to reload stream...');
+                        player.load();
+                        player.play().catch(e => console.log('Retry failed:', e));
+                    }, 3000);
+                }
+            });
+
+            // Add stalling detection and recovery
+            player.on('waiting', function() {
+                console.log('Stream is buffering...');
+                const statusEl = document.getElementById('stream-status');
+                statusEl.textContent = 'Buffering...';
+            });
+
+            player.on('playing', function() {
+                console.log('Stream resumed playing');
+                const statusEl = document.getElementById('stream-status');
+                statusEl.textContent = 'Online';
             });
         });
 
@@ -919,6 +957,13 @@
                         src: streamData.streamUrl,
                         type: 'application/x-mpegURL'
                     });
+                    
+                    // Add debugging for stream quality
+                    player.on('loadstart', () => console.log('Stream load started'));
+                    player.on('loadeddata', () => console.log('Stream data loaded'));
+                    player.on('canplay', () => console.log('Stream can start playing'));
+                    player.on('canplaythrough', () => console.log('Stream can play through'));
+                    
                     player.load();
                     player.play().catch(e => console.log("Autoplay was prevented.", e));
                     
