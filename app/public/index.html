@@ -856,7 +856,9 @@
                         overrideNative: true,
                         enableLowInitialPlaylist: true,
                         smoothQualityChange: true,
-                        handlePartialData: true
+                        handlePartialData: true,
+                        withCredentials: false,
+                        allowSeeksWithinUnsafeLiveWindow: true
                     }
                 },
                 liveui: true,
@@ -867,10 +869,10 @@
                 preload: 'auto',
                 playbackRates: [0.5, 1, 1.25, 1.5, 2],
                 bufferOptions: {
-                    bufferToKeep: 30,
-                    maxBufferLength: 60,
-                    maxBufferSize: 30 * 1000 * 1000,
-                    maxBufferTime: 30
+                    bufferToKeep: 45,
+                    maxBufferLength: 90,
+                    maxBufferSize: 50 * 1000 * 1000,
+                    maxBufferTime: 45
                 }
             });
 
@@ -900,16 +902,26 @@
             });
 
             // Add stalling detection and recovery
+            let bufferingTimeout;
             player.on('waiting', function() {
                 console.log('Stream is buffering...');
                 const statusEl = document.getElementById('stream-status');
                 statusEl.textContent = 'Buffering...';
+                
+                // Auto-recover if buffering too long
+                clearTimeout(bufferingTimeout);
+                bufferingTimeout = setTimeout(() => {
+                    console.log('Buffering too long, attempting recovery...');
+                    player.load();
+                    player.play().catch(e => console.log('Recovery attempt failed:', e));
+                }, 10000);
             });
 
             player.on('playing', function() {
                 console.log('Stream resumed playing');
                 const statusEl = document.getElementById('stream-status');
                 statusEl.textContent = 'Online';
+                clearTimeout(bufferingTimeout);
             });
         });
 
